@@ -6,6 +6,12 @@ This file contains detailed documentation of approaches and investigations that 
 
 ## A Tableau Calculus for ALCI\_RCC5 (Original, Now Superseded)
 
+*(2026-11-11: what is superseded here is the blocking condition and the
+soundness claim built on it. A complete-graph tableau without blocking, with
+witness reuse — the MiDeLoRa calculus — has a paper proof of soundness and
+completeness and does not terminate:
+[`papers/midelora_calculus/README.md`](papers/midelora_calculus/README.md).)*
+
 ### Overview
 
 The tableau constructs a finite **completion graph** --- a complete graph where every pair of nodes has a base relation label, and every node has a concept label (a subset of the Fischer-Ladner closure of the input concept). Unlike tree-based DL tableaux, creating a new node requires assigning it a role to **every** existing node.

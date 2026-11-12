@@ -38,8 +38,8 @@ and the encoding is kept deliberately direct so the Lean statements read as
 the mathematics they formalize:
 
 - the five RCC5 atoms are an **inductive type**, with the composition table
-  and converse as **total functions** (copied verbatim across all three
-  files, so there is no table-input risk);
+  and converse as **total functions** (copied verbatim between the files that define it —
+  `PosetBridge.lean` imports `POFreeLift`'s — so there is no table-input risk);
 - **concepts** are an inductive type in negation normal form (inverse roles
   absorbed via the RCC5 converse);
 - an **interpretation** is a domain predicate + a *total* relation function
@@ -53,7 +53,8 @@ the mathematics they formalize:
   presentation. Live width is the count of live (non-shadow) occurrences at
   an interface — the quantity F6 must bound.
 
-Toolchain: `elan`-installed Lean 4.32.0 at `~/.elan/bin`; build each file
+Toolchain: Lean 4.33.1, pinned (`elan run leanprover/lean4:v4.33.1 lean <file>`;
+`PosetBridge.lean` needs `POFreeLift.olean` first — see `LEAN.md`); build each file
 directly with `lean <file>` (no build system). See [`../../LEAN.md`](../../LEAN.md)
 for the per-file table and axiom list.
 
@@ -70,11 +71,19 @@ steps are argued, not proved: F6 ⇒? refined W2′ ⇒? complete enumeration
 ⇒(Lean) decision. That identity-selector minors are the *only* way F6 can fail
 is a conjecture with finite-network evidence.
 
+Two tests added on 2026-11-11 (unreviewed): a certificate scheme for the full
+logic must accept `K2` and the spiral concept and reject `C_cyc`. Whether the
+`Round19Transport` certificate format admits a certificate for the spiral
+concept — infinite models, no `∃PP`/`∃PPI` — has not been tested. And any
+decision procedure for the full logic decides two-variable logic over strict
+partial orders with unary predicates, itself open
+(`formal/PosetBridge.lean`).
+
 **The problem is Π⁰₁** — Lutz & Wolter's Theorem 28 (2006), which the project
 rederived and at first presented as new. The composition-table semantics
 is finitely first-order axiomatizable and ALCI embeds by the standard
 translation over arbitrary carriers, so by Gödel completeness UNSAT is r.e.
-and SAT sits at **Π⁰₁** — the domino problem's level. Hence decidability needs
+and SAT is in **Π⁰₁** (membership; no hardness claim). Hence decidability needs
 only *qualitative* F6 (every satisfiable concept has *some* finite certificate,
 **no computable bound**): dovetail a certificate enumeration against an
 FO-refutation enumeration. `formal/SemiDecidability.lean` formalizes the
@@ -85,12 +94,14 @@ Proposition adds one external theorem (Gödel completeness). See
 [`../../LEAN.md`](../../LEAN.md) § "The Π⁰₁ observation."
 
 Full treatment: overview paper, §"The Lean line and F6"; the
-artifact-by-artifact history (rounds 19–30 + the two cold reviews of the
-Lean) is in [`../../LEAN.md`](../../LEAN.md).
+artifact-by-artifact history (rounds 19–30 + the first two cold reviews of
+the Lean) is in [`../../LEAN.md`](../../LEAN.md).
 
 **Artifacts**
 - [`formal/Round19Transport.lean`](../../formal/Round19Transport.lean) — the normative development
 - [`formal/SemiDecidability.lean`](../../formal/SemiDecidability.lean) — the generic dovetailing combinator (premises as hypotheses)
+- [`formal/POFreeLift.lean`](../../formal/POFreeLift.lean) — the certified fragment (see [`../ConeScheme/`](../ConeScheme/Overview.md))
+- [`formal/PosetBridge.lean`](../../formal/PosetBridge.lean) — the poset bridge (2026-11-11, unreviewed); note in [`papers/poset_bridge/`](../../papers/poset_bridge/README.md)
 - [width-barrier status report and F6/W2′ analysis](../../papers/fable5_width_barrier/)
 
 **Probes:** WP34 (Lean mirror), WP39–WP44 (F6/W2′ cold attacks), WP84 (Π⁰₁ FO

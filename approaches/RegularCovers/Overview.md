@@ -15,6 +15,12 @@ structures are representable by regions at all is Lutz & Wolter's Theorem 23
 (2006); what is new is the order-and-disjointness form, the explicit
 construction, and the kernel proofs.
 
+New consumer (2026-11-11, unreviewed): `formal/PosetBridge.lean` reads a
+strict partial order as an ordered-disjoint structure with *empty*
+disjointness. In this page's vocabulary the full problem is then: two-variable
+logic over a strict partial order, plus a disjointness relation that is
+downward closed.
+
 **Why it is a better map, not a shorter path.** Its own keystone — a
 bounded-cover / bounded-width property — is provably *not* a local
 composition problem (RCC5 totality makes every Gaifman graph complete, so no

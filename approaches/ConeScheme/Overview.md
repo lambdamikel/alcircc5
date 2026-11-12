@@ -24,11 +24,21 @@ residual overlap edges are unconstrained when no formula can object to overlap.
 
 **Status.** Machine-checked in Lean 4: `decidableSat_cone` (NNF),
 `decidableFSat` (raw input), `decidableSetSat` (set semantics), fragment
-membership the only hypothesis; three cold reviews of the formalization found
-no counterexample. By Lutz & Wolter's Thm 24 the result also holds for
+membership the only hypothesis; three cold reviews of the formalization and
+two later audits (GPT-5.6 Sol, Astra 6) found no counterexample. By Lutz & Wolter's Thm 24 the result also holds for
 substructures of regular closed regions of ℝⁿ. For the full logic the same
 scheme gives only a sound refutation test: obligations from non-singleton
 compositions (e.g. `C_bad`, `C_joint`) are out of its reach.
+
+**Since 2026-11-11 (unreviewed).** The fresh-occurrence unfolding never makes
+one horizontal witness a part of another, so it cannot produce a model of `K2`
+or of the spiral concept (both Lean-checked satisfiable in
+`formal/PosetBridge.lean`). A slice in which a `∀PO` constraint can change the
+answer — L∥ with vertical witnesses only, witness `C_cyc` — is decided by
+import through the poset bridge: not by this scheme, and not Lean-checked
+beyond the bridge. In the other direction the certified procedure decides the
+`∀∥`-free poset logic (`decidablePSat_noAllInc`). Note:
+[`papers/poset_bridge/`](../../papers/poset_bridge/README.md).
 
 **Manuscripts & artifacts**
 - [**The fragment paper**](../../papers/pofree_fragment_arxiv.pdf) — the focused, self-contained write-up
@@ -41,8 +51,8 @@ compositions (e.g. `C_bad`, `C_joint`) are out of its reach.
 **Result.** The ∀PO-free fragment is **decidable, with a kernel-checked decision
 procedure** — and, since 2026-10-08, extended by a certified corollary
 (`erase_equisat`, `decidableSat_dfrag`, §299) to the PO-erasure fragment 𝒟,
-which *contains* `∀PO` (no `∃PP`/`∃PO`/`∀DR`): the first decidable slice with
-`∀PO`, via a PO-empty witness forest whose disjointness is incomparability.
+which *contains* `∀PO` (no `∃PP`/`∃PO`/`∀DR`): the first decided slice whose
+syntax contains `∀PO` (there the `∀PO` constraints are provably erasable), via a PO-empty witness forest whose disjointness is incomparability.
 Contributed by the Astra 6 review
 ([archive](../../papers/astra-6-latest-review-and-extension/)), verified by
 `wp136`. Decidable is not runnable: the signature space is doubly

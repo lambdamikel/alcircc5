@@ -5,16 +5,17 @@ $\mathcal{ALCI}_{\mathrm{RCC5}}$ decidability project. It is the detailed
 counterpart to the high-level summaries in `README.md` and the overview
 paper; those abstract the Lean work and point here.
 
-> ### ⚠ Read this first (2026-08-29)
+> ### ⚠ Read this first (last updated 2026-11-11)
 >
 > **The narrative below is a chronological log. Its main run ends 2026-07-24,
-> with one later section (E4--E6, 2026-08-02 … 08-06) appended.** It is kept as
+> with two later sections (E4--E6, 2026-08-02 … 08-06; `PosetBridge.lean`,
+> 2026-11-11) appended.** It is kept as
 > the record of how the artifact was built; it is *not* a description of the
 > current state, and several of its figures are stale (it reports
-> `POFreeLift.lean` at ~9,290 lines; it is now ~45,400, with 2,362 declarations,
+> `POFreeLift.lean` at ~9,290 lines; it is now 46,032, with 2,404 declarations,
 > 0 sorries / 0 warnings / 0 `sorryAx`).
 >
-> **Current position, in five lines.**
+> **Current position.**
 > 1. The ∀PO-free fragment is **certified decidable across all four quadrants**,
 >    including the mixed one. Capstones: `decidableFSat` (raw input),
 >    `decidableSat_cone` (NNF), `decidableSetSat` (concrete sets) — fragment
@@ -51,12 +52,28 @@ paper; those abstract the Lean work and point here.
 >    found **no gap**; its PO-erasure theorem is now formalized here as §299:
 >    `decidableSat_dfrag` / `decidableSetSat_dfrag` decide the fragment 𝒟
 >    (no `∃PP`/`∃PO`/`∀DR`, **`∀PO` permitted**) by erasing `∀PO` and running
->    `decidableSat_cone` — the first decidable slice containing `∀PO`, via a
->    PO-empty witness forest whose disjointness is incomparability
+>    `decidableSat_cone` — the first decided slice whose syntax contains `∀PO`
+>    (its `∀PO` constraints are erasable; a slice in which a `∀PO` constraint
+>    can change the answer is decided only by import through the poset bridge,
+>    item 8), via a PO-empty witness forest whose disjointness is incomparability
 >    (`erase_equisat`, `forest_truth`). §300 adds the order-level
 >    maximal-disjointness lemmas (`odMax`, `odMax_largest`, `pdown_*`).
 >    Verified against the review by `wp136`; archive in
 >    `papers/astra-6-latest-review-and-extension/`.
+> 8. **2026-11-11 (unreviewed).** A sixth file, `formal/PosetBridge.lean`
+>    (1,354 lines, imports `POFreeLift`): the syntactic fragment L∥ (`∃DR` only
+>    inside `∃PO.C ⊔ ∃DR.C`, `∀PO` only inside `∀PO.C ⊓ ∀DR.C`) is
+>    equisatisfiable with the tense logic of strict partial orders with
+>    incomparability (`poset_bridge`, `poset_bridge_fin`), hence — by a textbook
+>    normal-form step that is not formalized — with two-variable logic over
+>    strict partial orders with unary predicates (`patsys_to_rcc5`). General
+>    satisfiability there is open, so the full logic contains an open problem;
+>    no reduction in the other direction is known. Also Lean-checked: an
+>    infinity axiom with no `∃PP`/`∃PPI` (`spiralConcept_*`), `k2_sat` (the
+>    concept the cover-tree tableau wrongly rejects), `ccyc_unsat` /
+>    `ccycErased_sat`. Not Lean-checked: the two slices decided by import
+>    through the bridge. See the last section and
+>    `papers/poset_bridge/README.md`; corrections in `ERRATA.md`.
 >
 > **For the current state, read `ASSEMBLY_DESIGN.md` §§266–298** and the head
 > status paragraph of `CLAUDE.md`, not this file.
@@ -75,20 +92,27 @@ Standing label for the full logic: **strongly supported, not certified**; the
 | File | Lines | Axioms | What it is |
 |---|---|---|---|
 | `formal/Round19Transport.lean` | ~5,300 | `propext`, `Quot.sound` (+ `ofReduceBool` in `native_decide` witnesses only) | The normative development: certificate transport → S-layer closure → catalogue → logic layer → abstraction-completeness → non-oracular decision-grade reduction. Zero `sorry`. |
-| `formal/RCC5NormalForm.lean` | ~215 | `propext` (forward); `+ Classical.choice` (one converse direction) | The RCC5 normal form, **both directions**, arbitrary domains. Forward (`toOrderedDisjoint`): every strong-EQ RCC5 network is an ordered-disjoint structure (PP = strict partial order, DR = downward-closed disjointness) — `propext` only. Converse (GPT-5.6 Pro's canonical set representation, `papers/final_paper_gpt_5.6_review/`; verified in wp88): `eta` maps each x to the non-disjoint pairs with a coordinate ≤ x; `sub_iff_le` (order reproduced) and `eta_injective` are **fully constructive (zero axioms)**, `disj_iff_eta_disjoint` needs `Classical.choice` only for the "sets-disjoint ⟹ D" direction. So the biconditional holds on arbitrary domains. |
+| `formal/RCC5NormalForm.lean` | 231 | `propext` (forward); `+ Classical.choice` (one converse direction) | The RCC5 normal form, **both directions**, arbitrary domains. Forward (`toOrderedDisjoint`): every strong-EQ RCC5 network is an ordered-disjoint structure (PP = strict partial order, DR = downward-closed disjointness) — `propext` only. Converse (GPT-5.6 Pro's canonical set representation, `papers/final_paper_gpt_5.6_review/`; verified in wp88): `eta` maps each x to the non-disjoint pairs with a coordinate ≤ x; `sub_iff_le` (order reproduced) and `eta_injective` are **fully constructive (zero axioms)**, `disj_iff_eta_disjoint` needs `Classical.choice` only for the "sets-disjoint ⟹ D" direction. So the biconditional holds on arbitrary domains. |
 | `formal/ForcingReduction.lean` | ~145 | `propext`, `Quot.sound`, `Classical.choice` | The forcing reduction (Obs. 7.5 formalized): `F6_fin` holds iff no satisfiable concept forces an unbounded rigid horizontal crowd — modulo the width-crowd adequacy lemma, carried as a hypothesis field (not an axiom). |
 | `formal/SemiDecidability.lean` | ~262 | `propext`, `Quot.sound`, `Classical.choice` (+ `ofReduceBool` in the toy witness only) | The semi-decidability schema: since SAT is Π⁰₁ (see below), decidability follows from a dovetailed certificate/refutation search — `decidableSat` — needing only *qualitative* F6 (some finite certificate), **no computable width bound**; `quantitative_free` recovers the bound a posteriori. Four inputs are hypothesis fields, not axioms; the Markov search core is classical-free. Zero `sorry`. |
-| `formal/POFreeLift.lean` | ~9,290 | `propext`, `Quot.sound` (+ `Classical.choice` in the D2/E2 + extraction model-side analysis only) | The two-tier **chain-unfolding lift** + (2026-07-22, fragment-certification **round A**) the **logic layer over the unfolding**. Lift: `lift_cc` — if the augmented one-point network (`aug` on `Option β`) is composition-consistent and the kernel is distinct from every external (`K e ≠ EQ`, strong-EQ), then replacing the kernel by an infinite PP-chain under the constant interface (`unf` on `β ⊕ ℕ`) stays composition-consistent. CC = every ordered triple closed, so this **subsumes multi-path PO forcing** — the argument does NOT assume "PO is free" (the 16th review's concern). Eight-case ordered-triple proof. **`unf_is_frame`** strengthens this to a full RCC5 `Frame` (reflexive-EQ + strong-EQ + converse + CC): a finite valid atomic quotient unfolds to an infinite genuine ALCI_RCC5 frame — **no patchwork/compactness needed for the abstract-semantics core**. Round A (see below): `Concept`/`Interp`/`sat`/`Hintikka`/`truth_lemma`/`RCC5Interp`/`Satisfiable` mirroring the normative artifact + the **two-tier single-kernel certificate** (`TwoTier`: external part `E`/`K`/`tauE` + one kernel with `p` cyclic phase types; validity `TwoTierOk` = the lift's frame hypotheses + the Hintikka obligations per **edge class** of the unfolding) + **`twoTier_hintikka`** (a valid certificate's labelling is a Hintikka labelling of the unfolding; chain arithmetic: every rung has a phase, every phase recurs above every rung) + capstone **`twoTier_sound`** (valid certificate + concept at a node ⟹ `Satisfiable` — certificate-to-model soundness THROUGH THE LOGIC, end to end) + `POFree` (the fragment predicate; soundness is fragment-agnostic, `POFree` is completeness-side vocabulary) + witness **`cinf_satisfiable`** (`∃PP.⊤ ⊓ ∀PP.∃PP.⊤` — a concept with NO finite model — proved `Satisfiable` through the full pipeline). Round B (2026-07-22, same day): the **multi-kernel lift** — `desc_cc`/`cchain` (directed chains, ascending or descending), the finite quotient `qnet` on `β ⊕ κ`, the unfolding `munf` on `β ⊕ κ×ℕ`, **`munf_is_frame`** (`Frame qnet ⟹ Frame munf`, all properness derived from the quotient's own strong-EQ — no extra hypotheses), the **`MultiTier`** certificate (any kernel family, per-kernel direction, constant cross-kernel interfaces; validity = Hintikka obligations per edge class incl. cross-kernel `kq_all` and cross-kernel fulfilment), **`multiTier_hintikka`** + capstone **`multiTier_sound`**, and witness **`cboth_satisfiable`** (`Cinf ⊓ ∃DR.(∃PPI.⊤ ⊓ ∀PPI.∃PPI.⊤)` — an ascending AND a descending infinite tower, DR-linked: two kernels of opposite direction, beyond any single-kernel certificate with finite external part). Round C (2026-07-22/23): the **executable first-order checker** — `FinMT` (certificates as pure list data: atom tables, concept lists, direction flags; Gödel-numerable), total decoder `decodeMT`, computable oracle-free Boolean checker **`mtOkB`/`mtAcceptB`** (folds over index ranges and type lists; the frame conditions checked uniformly on a raw `Nat`-encoded quotient `qraw`), soundness **`mtOkB_sound`** (checker ⟹ `MultiTierOk (decodeMT F)`) and capstone **`mtAcceptB_sound`** (acceptance ⟹ `Satisfiable` — first-order data to model, end to end); witness `cboth_satisfiable_exec` re-derives the two-tower result through the checker with the certificate as plain lists, and the acceptance is proved **by kernel `decide`** — no `native_decide`, so the axiom profile stays `propext`/`Quot.sound` even for the executable witness. Round D1 (2026-07-23): checker **completeness** — **`mtOkB_iff`** (the Boolean checker accepts EXACTLY the valid decoded certificates), acceptance-completeness **`mtAcceptB_complete`** (a valid certificate carrying `C0` at any node yields an accepted root index), and the fragment's decision-grade reduction **`decidableSat_of_codes`** (a fixed candidate-code list + the completeness premise — every satisfiable concept has an accepted code in the list, i.e. exactly the round-D2 extraction — yields `Decidable (Satisfiable C0)`; soundness side premise-free). **The EXTRACTION (completeness) side + fragment lifts (2026-07-23/24):** the **horizontal recursion** `rnodes` with the coverage theorem **`rnodes_covers`** (every demand of a reachable node's requirement type is fulfilled by a reachable node — the project's historically-designated risk, now kernel-checked); the **∀-free fragment** closed end to end (**`satisfiable_iff_allfree_cert`**, honestly a certificate characterization not an FMP); and the **∀DR-propagation lift** — the **first fragment with genuine ∀-firing certified both directions** (**`satisfiable_iff_podr_cert`**): fragment `DRFrag` (every ∃ is ∃DR, every ∀ is ∀DR hence ∀PO-free, each ∀DR DR-guard-free), certificate via the **saturated-label recursion** `slabel` (expand-closed reverse ∀DR-firing batch) + coverage `snodes_covers` + the **tree-structural frame** `symDrPo_frame` (DR on ∃DR-demand edges, PO elsewhere, EQ diagonal — a valid RCC5 frame for any symmetric {DR,PO} labelling) lifted through the empty-kernel quotient (`qnet_empty_frame`); `ee_all` on DR = the ∀DR reverse-firing (`slabel_dr_forward/reverse`), on PO/EQ vacuous. **THE HORIZONTAL ∀PO-FREE FRAGMENT (2026-07-24, clean pivot):** `satisfiable_iff_hfrag_cert` — the full ∀PO-free fragment MINUS vertical existentials `∃PP`/`∃PPI`, certified BOTH directions, strictly generalising the ∀-free and ∀DR-propagation results. Fragment `HFrag`: every `∃` is DR/PO/EQ, every `∀` is non-PO (∀PO-free), NO guard-freeness. Handles nested `∀DR.(∀DR.A)`/`∀DR.(∃DR.B)`, `∀PP`/`∀PPI` (vacuous on the DR/PO/EQ frame), `∀EQ`/`∃EQ` (reflexive), `∃PO`. The pivot that dissolved the `∀DR`-fixpoint AND the `∃EQ`/`∀EQ` fold at once: the label is the **model type truncated by modal depth** (`mtk C₀ I x k` = model-true formulas of depth ≤ k). The model is already `∀`-closed both ways (`mty_all` forward, `dr_reverse_sat` reverse via `conv DR = DR`), and depth-truncation gives termination — so NO syntactic reverse-firing recursion. `mtkNodes` recurses on the budget `k` directly (each demand's witness at `k-1`); coverage `mtkNodes_covers`; `mtHF_ok` (`ee_all` three-way — EQ diagonal `mtk_all_eq`, DR `mtk_all_fwd`/`mtk_all_dr_rev`, PO excluded; `e_ex` three-way — DR/PO children, `∃EQ` = same node). Valid for a characterization (the extraction has the model); `reqType`/`slabel` stay for the decidability layer. Only `∃PP`/`∃PPI` (vertical kernels) now remain toward full ∀PO-free. Still a certificate characterization (β an arbitrary Type); Fintype β + K(C₀) ⟹ Decidability is next. Zero `sorry`. |
+| `formal/POFreeLift.lean` | 46,032 (2,404 declarations) | `propext`, `Quot.sound`, `Classical.choice` | **The certified fragment.** Cone scheme: `decidableSat_cone` (NNF), `decidableFSat` (raw input), `decidableSetSat` (sets), `satisfiable_iff_set`, `coneScheme_unsat_full` (one-sided test for the full logic); PO-erasure §299 (`erase_equisat`, `decidableSat_dfrag`), §300 (`odMax`, `pdown_*`). It also contains the earlier two-tier and per-quadrant development (the log below): still proved, not what certifies the theorem. *Earlier content, as recorded when the file had ~9,290 lines:* The two-tier **chain-unfolding lift** + (2026-07-22, fragment-certification **round A**) the **logic layer over the unfolding**. Lift: `lift_cc` — if the augmented one-point network (`aug` on `Option β`) is composition-consistent and the kernel is distinct from every external (`K e ≠ EQ`, strong-EQ), then replacing the kernel by an infinite PP-chain under the constant interface (`unf` on `β ⊕ ℕ`) stays composition-consistent. CC = every ordered triple closed, so this **subsumes multi-path PO forcing** — the argument does NOT assume "PO is free" (the 16th review's concern). Eight-case ordered-triple proof. **`unf_is_frame`** strengthens this to a full RCC5 `Frame` (reflexive-EQ + strong-EQ + converse + CC): a finite valid atomic quotient unfolds to an infinite genuine ALCI_RCC5 frame — **no patchwork/compactness needed for the abstract-semantics core**. Round A (see below): `Concept`/`Interp`/`sat`/`Hintikka`/`truth_lemma`/`RCC5Interp`/`Satisfiable` mirroring the normative artifact + the **two-tier single-kernel certificate** (`TwoTier`: external part `E`/`K`/`tauE` + one kernel with `p` cyclic phase types; validity `TwoTierOk` = the lift's frame hypotheses + the Hintikka obligations per **edge class** of the unfolding) + **`twoTier_hintikka`** (a valid certificate's labelling is a Hintikka labelling of the unfolding; chain arithmetic: every rung has a phase, every phase recurs above every rung) + capstone **`twoTier_sound`** (valid certificate + concept at a node ⟹ `Satisfiable` — certificate-to-model soundness THROUGH THE LOGIC, end to end) + `POFree` (the fragment predicate; soundness is fragment-agnostic, `POFree` is completeness-side vocabulary) + witness **`cinf_satisfiable`** (`∃PP.⊤ ⊓ ∀PP.∃PP.⊤` — a concept with NO finite model — proved `Satisfiable` through the full pipeline). Round B (2026-07-22, same day): the **multi-kernel lift** — `desc_cc`/`cchain` (directed chains, ascending or descending), the finite quotient `qnet` on `β ⊕ κ`, the unfolding `munf` on `β ⊕ κ×ℕ`, **`munf_is_frame`** (`Frame qnet ⟹ Frame munf`, all properness derived from the quotient's own strong-EQ — no extra hypotheses), the **`MultiTier`** certificate (any kernel family, per-kernel direction, constant cross-kernel interfaces; validity = Hintikka obligations per edge class incl. cross-kernel `kq_all` and cross-kernel fulfilment), **`multiTier_hintikka`** + capstone **`multiTier_sound`**, and witness **`cboth_satisfiable`** (`Cinf ⊓ ∃DR.(∃PPI.⊤ ⊓ ∀PPI.∃PPI.⊤)` — an ascending AND a descending infinite tower, DR-linked: two kernels of opposite direction, beyond any single-kernel certificate with finite external part). Round C (2026-07-22/23): the **executable first-order checker** — `FinMT` (certificates as pure list data: atom tables, concept lists, direction flags; Gödel-numerable), total decoder `decodeMT`, computable oracle-free Boolean checker **`mtOkB`/`mtAcceptB`** (folds over index ranges and type lists; the frame conditions checked uniformly on a raw `Nat`-encoded quotient `qraw`), soundness **`mtOkB_sound`** (checker ⟹ `MultiTierOk (decodeMT F)`) and capstone **`mtAcceptB_sound`** (acceptance ⟹ `Satisfiable` — first-order data to model, end to end); witness `cboth_satisfiable_exec` re-derives the two-tower result through the checker with the certificate as plain lists, and the acceptance is proved **by kernel `decide`** — no `native_decide`, so the axiom profile stays `propext`/`Quot.sound` even for the executable witness. Round D1 (2026-07-23): checker **completeness** — **`mtOkB_iff`** (the Boolean checker accepts EXACTLY the valid decoded certificates), acceptance-completeness **`mtAcceptB_complete`** (a valid certificate carrying `C0` at any node yields an accepted root index), and the fragment's decision-grade reduction **`decidableSat_of_codes`** (a fixed candidate-code list + the completeness premise — every satisfiable concept has an accepted code in the list, i.e. exactly the round-D2 extraction — yields `Decidable (Satisfiable C0)`; soundness side premise-free). **The EXTRACTION (completeness) side + fragment lifts (2026-07-23/24):** the **horizontal recursion** `rnodes` with the coverage theorem **`rnodes_covers`** (every demand of a reachable node's requirement type is fulfilled by a reachable node — the project's historically-designated risk, now kernel-checked); the **∀-free fragment** closed end to end (**`satisfiable_iff_allfree_cert`**, honestly a certificate characterization not an FMP); and the **∀DR-propagation lift** — the **first fragment with genuine ∀-firing certified both directions** (**`satisfiable_iff_podr_cert`**): fragment `DRFrag` (every ∃ is ∃DR, every ∀ is ∀DR hence ∀PO-free, each ∀DR DR-guard-free), certificate via the **saturated-label recursion** `slabel` (expand-closed reverse ∀DR-firing batch) + coverage `snodes_covers` + the **tree-structural frame** `symDrPo_frame` (DR on ∃DR-demand edges, PO elsewhere, EQ diagonal — a valid RCC5 frame for any symmetric {DR,PO} labelling) lifted through the empty-kernel quotient (`qnet_empty_frame`); `ee_all` on DR = the ∀DR reverse-firing (`slabel_dr_forward/reverse`), on PO/EQ vacuous. **THE HORIZONTAL ∀PO-FREE FRAGMENT (2026-07-24, clean pivot):** `satisfiable_iff_hfrag_cert` — the full ∀PO-free fragment MINUS vertical existentials `∃PP`/`∃PPI`, certified BOTH directions, strictly generalising the ∀-free and ∀DR-propagation results. Fragment `HFrag`: every `∃` is DR/PO/EQ, every `∀` is non-PO (∀PO-free), NO guard-freeness. Handles nested `∀DR.(∀DR.A)`/`∀DR.(∃DR.B)`, `∀PP`/`∀PPI` (vacuous on the DR/PO/EQ frame), `∀EQ`/`∃EQ` (reflexive), `∃PO`. The pivot that dissolved the `∀DR`-fixpoint AND the `∃EQ`/`∀EQ` fold at once: the label is the **model type truncated by modal depth** (`mtk C₀ I x k` = model-true formulas of depth ≤ k). The model is already `∀`-closed both ways (`mty_all` forward, `dr_reverse_sat` reverse via `conv DR = DR`), and depth-truncation gives termination — so NO syntactic reverse-firing recursion. `mtkNodes` recurses on the budget `k` directly (each demand's witness at `k-1`); coverage `mtkNodes_covers`; `mtHF_ok` (`ee_all` three-way — EQ diagonal `mtk_all_eq`, DR `mtk_all_fwd`/`mtk_all_dr_rev`, PO excluded; `e_ex` three-way — DR/PO children, `∃EQ` = same node). Valid for a characterization (the extraction has the model); `reqType`/`slabel` stay for the decidability layer. Only `∃PP`/`∃PPI` (vertical kernels) now remain toward full ∀PO-free. Still a certificate characterization (β an arbitrary Type); Fintype β + K(C₀) ⟹ Decidability is next. Zero `sorry`. |
+| `formal/PosetBridge.lean` | 1,354 | `propext`, `Classical.choice`, `Quot.sound` | (2026-11-11, **unreviewed**.) Imports `POFreeLift`. `poset_bridge` / `poset_bridge_fin`, `patsys_to_rcc5`, `decidablePSat_of_full`, `spiralConcept_*`, `k2_sat`, `ccyc_unsat`. Not formalized: Scott normal form; the imported decidability theorems. Zero `sorry`. |
 
-**Toolchain.** `elan`-installed Lean 4.32.0 at `~/.elan/bin`. No mathlib,
-no lakefile. Build each file directly:
+**Toolchain.** Lean 4.33.1, pinned by convention: there is no mathlib, no
+lakefile and no `lean-toolchain` file, so a bare `lean` uses elan's default,
+which has moved past 4.33.1 and deprecates idioms `POFreeLift.lean` uses. All
+six files were last built on 4.33.1 on 2026-11-11 (0 errors, 0 warnings).
+Build each file directly:
 
 ```
-cd formal && ~/.elan/bin/lean Round19Transport.lean
-cd formal && ~/.elan/bin/lean RCC5NormalForm.lean
-cd formal && ~/.elan/bin/lean ForcingReduction.lean
-cd formal && ~/.elan/bin/lean SemiDecidability.lean
-cd formal && ~/.elan/bin/lean POFreeLift.lean
+cd formal
+L="elan run leanprover/lean4:v4.33.1 lean"
+$L Round19Transport.lean
+$L RCC5NormalForm.lean
+$L ForcingReduction.lean
+$L SemiDecidability.lean
+$L -o POFreeLift.olean POFreeLift.lean     # ~1 min; writes the .olean PosetBridge imports
+LEAN_PATH=. $L PosetBridge.lean
 ```
 
 The mirror harness `verification/python/wp34_round19_lean_mirror.py`
@@ -921,7 +945,7 @@ design work):
      absorption duals, `dseg_*`, descending witness selection,
      `dbuildChain`, `dsegment_select`).
 
-## The two cold reviews of the Lean
+## The first two cold reviews of the Lean (14th and 15th)
 
 - **14th review (adequacy).** The first cold review of the Lean asked: do
   the statements *mean* $\mathcal{ALCI}_{\mathrm{RCC5}}$, and are they
@@ -1054,8 +1078,11 @@ self-contained, and it leaves F6 for the full logic exactly where the
 These fragment theorems are **unreviewed**; the project ledger's
 presumption (a future cold review finds something) applies to them in
 full. The design and per-step provenance live in `ASSEMBLY_DESIGN.md`
-§§17–25; the campaign log is in the auto-memory
-`pofree-certification-campaign.md`.
+§§17–25.
+
+*(As written 2026-08-06. Superseded: the fragment was certified by the cone
+scheme on 2026-08-29 and has been reviewed five times; see the box at the
+top.)*
 
 ## `PosetBridge.lean` (2026-11-11) — two-variable logic over partial orders, inside the logic
 
@@ -1068,9 +1095,14 @@ copying its definitions, so that its theorems are about the same `Concept`,
 
 ```
 cd formal
-lean -o POFreeLift.olean POFreeLift.lean     # ~1 min; *.olean is git-ignored
-LEAN_PATH=. lean PosetBridge.lean            # ~2 s
+L="elan run leanprover/lean4:v4.33.1 lean"
+$L -o POFreeLift.olean POFreeLift.lean       # ~1 min; *.olean is git-ignored
+LEAN_PATH=. $L PosetBridge.lean              # ~2 s
 ```
+
+General satisfiability on the two-variable side is open (`ERRATA.md`, E1). So
+these theorems show that the full logic contains an open problem; by
+themselves they decide nothing new.
 
 1,354 lines, exit 0, 0 errors / 0 warnings / 0 sorries, no `axiom`, no
 `native_decide`.

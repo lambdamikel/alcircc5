@@ -64,9 +64,9 @@
 \author{Michael Wessel\\
 \small LambdaMikel@Home \quad\textbullet\quad \texttt{miacwess@gmail.com}\\[0.45em]
 \small with AI assistants:\\
-\small Claude Opus~4.6, Opus~4.7, Opus~4.8, Fable~5, Opus~5 \;(Anthropic)\\
-\small GPT-5.4, GPT-5.4~Pro, GPT-5.5, GPT-5.6~Pro, GPT-5.6~Sol \;(OpenAI)}
-\date{September 2026; revised October 2026}
+\small Claude Opus~4.6, Opus~4.7, Opus~4.8, Fable~5, Opus~5, Fable~5.2 \;(Anthropic)\\
+\small GPT-5.4, GPT-5.4~Pro, GPT-5.5, GPT-5.6~Pro, GPT-5.6~Sol, Astra~6 \;(OpenAI)}
+\date{September 2026; revised October and November 2026}
 
 \begin{document}
 \maketitle
@@ -101,9 +101,12 @@ substructure semantics over regular closed regions of $\reals^n$. An October
 2026 revision adds a certified extension, following an external review by
 Astra~6: concepts that do contain $\forall\PO$ are also decided, provided
 $\exists\PP$, $\exists\PO$ and $\forall\DR$ are absent, by erasing each
-$\forall\PO$ restriction --- the first decidable slice containing
-$\forall\PO$. The search space is doubly exponential, so the contribution is
-a decidability theorem, not a practical reasoner.
+$\forall\PO$ restriction, which is vacuous there --- the first slice containing
+$\forall\PO$ whose decidability is machine-checked. A November 2026 revision
+records what lies just outside: a fragment of the full logic whose
+satisfiability problem is an open problem of two-variable logic. The search
+space is doubly exponential, so the contribution is a decidability theorem, not
+a practical reasoner.
 \end{abstract}
 
 \medskip
@@ -137,7 +140,8 @@ and every triple must respect the composition table. A witness introduced for
 one requirement is therefore immediately constrained against every other
 element, not only against the element that requested it. Second, the logic has
 no finite model property: $\exists\PP.\top\sqcap\forall\PP.\exists\PP.\top$
-forces an infinite chain of proper parts (Example~\ref{ex:inf}). A decision
+forces an infinite ascending chain of proper superparts
+(Example~\ref{ex:inf}). A decision
 procedure must therefore represent infinite models finitely, and the familiar
 way to do that---stop expanding an occurrence when an earlier occurrence
 carries the same type, and let the earlier one stand in for it---is exactly
@@ -220,7 +224,9 @@ $C$ has no positive $\forall\PO$ and no negative $\exists\PO$, and $D$ has no
 positive $\exists\PO$ and no negative $\forall\PO$. No complexity
 classification is claimed beyond a doubly exponential upper bound
 (\S\ref{sec:complexity}), and the literal procedure is far too expensive to
-run on any but tiny inputs. Decidability of the full logic remains open.
+run on any but tiny inputs. Decidability of the full logic remains open; it
+is at least as hard as an open problem of two-variable logic
+(\S\ref{ssec:bridge}).
 
 %% ====================================================================
 \section{Preliminaries}
@@ -315,7 +321,9 @@ distinct because $\PP$ is irreflexive and transitive. The same happens
 downwards through disjointness: in $\exists\DR.\forall\DR.\exists\PPI.A$, a
 disjoint witness forces the root to have a proper part, which is again
 disjoint from the witness because disjointness is inherited by parts
-($\comp(\PP,\DR)=\{\DR\}$), and so on without end.
+($\comp(\PP,\DR)=\{\DR\}$), and so on without end. Inside the fragment both
+examples use a part-of demand. Outside it that is not needed
+(\S\ref{ssec:bridge}).
 \end{example}
 
 %% ====================================================================
@@ -812,7 +820,9 @@ overlap. Without $\forall\PO$ no formula can object to that default, so nothing
 that crosses between branches needs controlling. With $\forall\PO$ it does---the
 unsatisfiable concepts $C_{\mathrm{bad}}$ and $C_{\mathrm{joint}}$ of
 \S\ref{ssec:full} are exactly obligations on such cross-branch pairs---and the
-interface problem of the original programme returns.
+interface problem of the original programme returns. The shape itself also
+stops being general: the satisfiable $K_2$ of \S\ref{ssec:bridge} forces two
+overlap-born witnesses to be nested, which the unfolding never does.
 
 %% ====================================================================
 \section{Decision theorems}
@@ -912,7 +922,8 @@ The extension is a strict syntactic one --- $\forall\PO.A\in\mathcal D$ is not
 $\forall\PO$-free (\code{allpo\_dfrag}, \code{allpo\_not\_pofree},
 \code{allpo\_satisfiable}) --- but a calibrated one: inside $\mathcal D$ the
 $\forall\PO$ restrictions are provably toothless, which is exactly what the
-construction shows. Each excluded constructor is necessary. With $\exists\PO$,
+construction shows. Each exclusion is necessary for the erasure argument. With
+$\exists\PO$,
 $\exists\PO.\top\sqcap\forall\PO.\bot$ is unsatisfiable while its erasure is
 not; the review's witnesses for $\exists\PP$ and $\forall\DR$
 (\texttt{wp136}) force two witnesses into a $\PO$ relation that a surviving
@@ -924,6 +935,12 @@ lower bound, and principal down-sets realize it (Lean: \code{odMax},
 \code{pdown\_disjoint\_iff}); its interpretation-level corollary --- concepts
 without $\exists\PO$ and $\forall\DR$ can be evaluated over principal
 down-sets --- is not formalized and rests on the review's proof and our probe.
+
+Erasability is a property of $\mathcal D$, not of decidable slices with
+$\forall\PO$ in general: in a second such slice, decided by import from the
+literature and incomparable with $\mathcal D$, a $\forall\PO$ conjunct can
+change the answer (\S\ref{ssec:bridge},~(a)). $\mathcal D$ remains the only
+slice containing $\forall\PO$ whose decidability is checked in Lean.
 
 \subsection{A one-sided test for the full logic}
 \label{ssec:full}
@@ -962,7 +979,80 @@ is refuted by the satisfiable
 $C_{\mathrm{sat}}=\exists\PP.(A\sqcap\forall\PO.A)\sqcap\exists\PP.\neg A$,
 whose two witnesses must be nested, not overlapping. A decision procedure for
 the full logic has to reason about the relations \emph{among} contemporaneous
-witnesses, not only along the edges that created them.
+witnesses, not only along the edges that created them---including part-of
+relations between witnesses that were both born by overlap ($K_2$,
+\S\ref{ssec:bridge}).
+
+\subsection{What lies just outside: the incomparability fragment}
+\label{ssec:bridge}
+
+The results of this subsection were added in November 2026. They are checked
+in Lean where a declaration is named (\texttt{formal/PosetBridge.lean}, which
+imports the artifact of \S\ref{sec:lean}) and have not been reviewed; the note
+is \texttt{papers/poset\_bridge/} in the repository~\cite{Artifact}.
+
+Two distinct regions are incomparable in the part-of order exactly when they
+are related by $\PO$ or $\DR$. Let $\mathcal L_{\parallel}$ be the NNF concepts
+in which $\exists\DR.C$ occurs only as the right disjunct of
+$\exists\PO.C\sqcup\exists\DR.C$ and $\forall\PO.C$ only as the left conjunct
+of $\forall\PO.C\sqcap\forall\DR.C$; a bare $\exists\PO.C$ and a bare
+$\forall\DR.C$ are allowed. Such a concept cannot tell overlap from
+disjointness. Reading the two combinations as ``some'' and ``every incomparable
+region is a $C$'', and a bare $\forall\DR.C$ as $\top$, turns it into a formula
+of the tense logic of strict partial orders with an incomparability modality.
+
+\begin{theorem}[Poset bridge; Lean: \code{poset\_bridge},
+\code{poset\_bridge\_fin}]\label{thm:bridge}
+A concept of $\mathcal L_{\parallel}$ is satisfiable if and only if its reading
+is satisfiable over a strict partial order; likewise for satisfiability in
+finite models.
+\end{theorem}
+
+From right to left, declare every incomparable pair $\PO$ and leave
+disjointness empty: this is an ordered-disjoint structure, so
+Theorem~\ref{thm:nf} applies. From left to right, keep the domain and take
+$\PP$ as the order. The same holds for finite systems of two-variable patterns
+over $<$, $=$, incomparability and unary predicates (\code{patsys\_to\_rcc5}).
+Every two-variable sentence over a strict partial order with unary predicates
+is equisatisfiable with such a system by Scott normal form; that step is
+standard and is not formalized. With it, satisfiability in
+$\mathcal L_{\parallel}$ and satisfiability of two-variable logic over strict
+partial orders with unary predicates are the same problem up to computable
+translations. General satisfiability of that logic is
+open~\cite{MarzecTendera2026}. A decision procedure for $\ALCIRCC{5}$ would
+decide it (\code{decidablePSat\_of\_full}); no reduction the other way is
+known. $\mathcal L_{\parallel}$ is not contained in the fragment
+of this paper, since it uses $\forall\PO$; its part without
+$\forall\PO.C\sqcap\forall\DR.C$ is, and Theorem~\ref{thm:main} decides it
+(\code{decidablePSat\_noAllInc}).
+
+Two published theorems decide two slices through the bridge. These are
+imports: they rest on the bridge, on an unformalized translation, and on the
+cited proofs, which we have not checked. (a)~For concepts of
+$\mathcal L_{\parallel}$ without $\exists\PO$, so that every witness is a
+proper part or superpart, satisfiability is decidable in
+2-\textsc{NExpTime}~\cite{SzwastTendera2018}. (b)~Finite satisfiability of
+$\mathcal L_{\parallel}$ is decidable in
+2-\textsc{NExpTime}~\cite{PrattHartmann2018}. With
+$W(P,Q)=P\sqcap\neg Q\sqcap\forall\PO.\neg Q\sqcap\forall\DR.\neg
+Q\sqcap\forall\PPI.\neg Q$, the concept
+$C_{\mathrm{cyc}}=\exists\PP.W(A,B)\sqcap\exists\PP.W(B,C)\sqcap
+\exists\PP.W(C,A)$ lies in~(a) and is unsatisfiable, because its three
+witnesses would be nested in a cycle; erasing its three $\forall\PO$ conjuncts
+makes it satisfiable (\code{ccyc\_unsat}, \code{ccycErased\_sat}). So (a) is
+the first decided slice in which a $\forall\PO$ restriction can change the
+answer.
+
+Two more concepts mark the boundary.
+$K_2=\exists\PO.(A\sqcap\forall\PO.\neg B\sqcap\forall\DR.\neg B)\sqcap
+\exists\PO.(B\sqcap\neg A)$ is satisfiable, by $r=\{1,3\}$, $a=\{1,4\}$,
+$b=\{1,4,5\}$, and in every model its two overlap witnesses are nested
+(\code{k2\_sat}, \code{k2\_witnesses\_nested}). And a satisfiable concept of
+$\mathcal L_{\parallel}$ with no $\exists\PP$ and no $\exists\PPI$ has only
+infinite models (\code{spiralConcept\_sat}, \code{spiralConcept\_infinite},
+\code{spiralConcept\_noExVert}; the construction is the spiral
+of~\cite{MarzecTendera2026}). Both use $\forall\PO$, and neither has a model
+of the shape built in \S\ref{sec:soundness}.
 
 %% ====================================================================
 \section{The formalization}
@@ -976,7 +1066,8 @@ $\eta$ also in \texttt{formal/RCC5NormalForm.lean}~\cite{Artifact}. The file is
 cumulative---$46{,}032$ lines, most of them earlier routes
 (\S\ref{sec:reflection})---and the cone scheme with its extensions occupies its
 last few thousand lines. The development log \texttt{ASSEMBLY\_DESIGN.md},
-\S\S267--297, records it step by step.
+\S\S267--298, records the cone scheme step by step; the erasure extension is
+documented in the source (\S\S299--300).
 
 The encoding is direct. Relations are an inductive type with composition and
 converse as functions; concepts are an inductive type in NNF; an interpretation
@@ -1025,10 +1116,20 @@ PO-erasure, Theorem~\ref{thm:erasure} & \code{DFrag}, \code{eraseAllPo},
 Maximal disjointness (order level), \S\ref{ssec:erasure} & \code{odMax},
   \code{odMax\_largest}, \code{pdown\_subset\_iff}, \code{pdown\_disjoint\_iff},
   \code{pdown\_inj}\\
+Poset bridge, \S\ref{ssec:bridge} (November 2026, unreviewed) &
+  \code{poset\_bridge}, \code{poset\_bridge\_fin}, \code{patsys\_to\_rcc5},
+  \code{decidablePSat\_of\_full}, \code{decidablePSat\_noAllInc}
+  (\texttt{PosetBridge.lean})\\
+Boundary concepts, \S\ref{ssec:bridge} & \code{k2\_sat},
+  \code{k2\_witnesses\_nested}, \code{ccyc\_unsat}, \code{ccycErased\_sat},
+  \code{spiralConcept\_sat}, \code{spiralConcept\_infinite},
+  \code{spiralConcept\_noExVert} (\texttt{PosetBridge.lean})\\
 \bottomrule
 \end{tabular}
 \caption{Results and their Lean declarations, all in
-\texttt{formal/POFreeLift.lean} unless marked.}
+\texttt{formal/POFreeLift.lean} unless marked. \texttt{PosetBridge.lean}
+imports that file; the decidability of the two imported slices of
+\S\ref{ssec:bridge} is not formalized.}
 \label{tab:map}
 \end{table}
 
@@ -1045,7 +1146,11 @@ The file builds with Lean~4.33.1 and 4.32.0 in under a minute each
 (\texttt{cd formal \&\& elan run leanprover/lean4:v4.33.1 lean
 POFreeLift.lean}), with no errors, warnings or \texttt{sorry}. Newer
 toolchains (4.34+) deprecate idioms the file uses; build with the pinned
-versions. The source contains no
+versions. \texttt{formal/PosetBridge.lean} imports this file and is checked in
+two steps: \texttt{lean -o POFreeLift.olean POFreeLift.lean}, then
+\texttt{LEAN\_PATH=. lean PosetBridge.lean}. It has no \texttt{sorry}, no
+\texttt{axiom} declaration and no \texttt{native\_decide}, and its capstones
+depend on the same three axioms. The source of \texttt{POFreeLift.lean} contains no
 \texttt{axiom} declaration, no \texttt{native\_decide}, and no \texttt{unsafe},
 \texttt{partial} or \texttt{implemented\_by}. The capstones depend on the axioms
 \texttt{propext}, \texttt{Classical.choice} and \texttt{Quot.sound}. Classical
@@ -1062,11 +1167,17 @@ release engineering, not premises of the theorem.
 \subsection{What machine checking does and does not settle}
 
 The kernel guarantees that the theorems follow from the definitions. It cannot
-guarantee that the definitions mean what this paper says they mean, and three
+guarantee that the definitions mean what this paper says they mean, and several
 things in the paper are not formal theorems: the absence of finite models in
-Example~\ref{ex:inf} (only satisfiability of $C_\infty$ is formalized), the
-complexity bound of \S\ref{sec:complexity}, and the transfer to regular closed
-regions in Corollary~\ref{cor:regions}, which cites Lutz and Wolter.
+Example~\ref{ex:inf} (only satisfiability of $C_\infty$ is formalized); the
+complexity bound of \S\ref{sec:complexity}; the transfer to regular closed
+regions in Corollary~\ref{cor:regions}, which cites Lutz and Wolter; in
+\S\ref{ssec:erasure}, the two necessity witnesses checked by probe and the
+interpretation-level normalization corollary; in \S\ref{ssec:full}, the status
+of $C_{\mathrm{bad}}$, $C_{\mathrm{joint}}$ and $C_{\mathrm{sat}}$, argued in
+the text and checked on a transcription; and in \S\ref{ssec:bridge}, the
+normal-form step to two-variable logic and the two imported decidability
+results.
 Definitional adequacy is what the reviews below were aimed at, and the
 equivalence with set semantics was proved partly so that it need not rest on
 anyone's reading of the frame conditions.
@@ -1075,8 +1186,9 @@ anyone's reading of the frame conditions.
 \label{ssec:reviews}
 
 The formalization was reviewed by three fresh model sessions with no access to
-its development history, each targeting a different part, and later audited at
-source level by a fourth~\cite{GPT56SolReview}.
+its development history, each targeting a different part, later audited at
+source level by a fourth~\cite{GPT56SolReview} and, at the level of the
+argument, by a fifth~\cite{Astra6Review}.
 \begin{itemize}
   \item The first built the file under two Lean versions, re-derived the
     composition table from set semantics, compared a transcription of the
@@ -1104,7 +1216,9 @@ source level by a fourth~\cite{GPT56SolReview}.
     contributed the extension of \S\ref{ssec:erasure}, which we verified
     (\texttt{wp136}) and then formalized.
 \end{itemize}
-No review found a counterexample to the theorem.
+No review found a counterexample to the theorem. The material of
+\S\ref{ssec:bridge} was added in November 2026 by a single model session. It is
+not a review and has not itself been reviewed.
 
 %% ====================================================================
 \section{Complexity and practicality}
@@ -1126,6 +1240,13 @@ encoding of the elimination---is the obvious next step, but it would need its
 own correctness proof. Merging spectra that agree on the currently relevant
 bodies is exactly the kind of identification that this construction avoids,
 and it could reintroduce the problems it removed.
+
+For running examples there is a different tool: a complete-graph tableau
+without blocking, re-implemented from Wessel's MiDeLoRa
+system~\cite{Wessel2008} with equality as identity
+(\texttt{src/midelora\_tableau.py}). By a paper proof that has not been
+reviewed it is sound and complete for the \emph{full} logic, and it does not
+terminate on satisfiable concepts all of whose models are infinite.
 
 %% ====================================================================
 \section{Why reuse failed, and what \texorpdfstring{$\forall\PO$}{forall-PO} breaks}
@@ -1160,17 +1281,22 @@ What $\forall\PO$ breaks is then easy to name. The unfolding labels every
 residual pair $\PO$, and without $\forall\PO$ no residual pair is constrained.
 With $\forall\PO$, the relations among contemporaneous witnesses matter, as
 $C_{\mathrm{bad}}$ and $C_{\mathrm{joint}}$ show, and a construction for the
-full logic has to choose them jointly. Three directions look promising: control
+full logic has to choose them jointly. Two directions look promising: control
 states that carry a complete RCC5 matrix among representatives of
 simultaneously live demands, whose completeness is where a bound on joint width
-would have to be proved; regular or automatic presentations of models; and a
-recasting of ordered-disjoint structures as a single strict order on two copies
-of the domain, which brings the problem close to two-variable logic with one
-transitive relation---whose general satisfiability problem is itself
-open~\cite{SzwastTendera2018,MarzecTendera2026}---and adds an involution that
-keeps the copies synchronized. The last two were suggested by GPT-5.6~Sol's
-review~\cite{GPT56SolReview}. Any candidate must reject $C_{\mathrm{bad}}$ and
-accept $C_{\mathrm{sat}}$.
+would have to be proved; and regular or automatic presentations of models. A
+third was to recast ordered-disjoint structures as a single strict order on two
+copies of the domain, with an involution that keeps the copies synchronized,
+which brings the problem close to two-variable logic with one transitive
+relation. General satisfiability of that logic is itself
+open~\cite{SzwastTendera2018,MarzecTendera2026}, and the full logic already
+contains its partial-order case with unary predicates (\S\ref{ssec:bridge});
+as a route to a decision procedure this lead is withdrawn. The second and third
+were suggested by GPT-5.6~Sol's review~\cite{GPT56SolReview}. Any candidate
+must reject $C_{\mathrm{bad}}$ and $C_{\mathrm{cyc}}$ and accept
+$C_{\mathrm{sat}}$, $K_2$ and the spiral concept; and a method that decides the
+full logic also decides two-variable logic over strict partial orders with
+unary predicates.
 
 %% ====================================================================
 \section{Related work}
@@ -1192,7 +1318,9 @@ pointing to work of Shapirovsky and Shehtman on a single inclusion
 modality~\cite{ShapirovskyShehtman2005}; that remark concerns usefulness and
 carries no decidability argument. Our fragment keeps $\PO$ and $\exists\PO$ and
 removes only the universal. So far as we can determine, no decidability result
-for a $\PO$-restricted RCC5 language has been published.
+for a $\PO$-restricted RCC5 language has been published. Two published theorems
+on two-variable logic do decide other slices of $\ALCIRCC{5}$ once translated
+(\S\ref{ssec:bridge}); they were not stated for RCC5.
 
 \paragraph{Constraint reasoning.} Consistency of finite networks of RCC
 relations is the subject of qualitative constraint reasoning; Renz and Nebel
@@ -1215,15 +1343,21 @@ relation.
 \paragraph{Event structures and two-variable logic.} The ordered-disjoint normal
 form matches the order and conflict skeleton of prime event
 structures~\cite{NielsenPlotkinWinskel1981}. For two-variable first-order logic
-with one transitive relation, decidability was
-claimed~\cite{SzwastTendera2013} and then withdrawn~\cite{SzwastTendera2018}:
-it holds for transitively guarded witnesses and for finite
-satisfiability~\cite{PrattHartmann2018}, and is open in general, also for a
-single partial order~\cite{MarzecTendera2026}. The unary case of that open
-problem is a syntactic fragment of $\ALCIRCC5$ lying outside the one decided
-here (\texttt{formal/PosetBridge.lean}, \code{poset\_bridge}), so the
-synchronized two-copy encoding of \S\ref{sec:reflection} would at best relate
-two open problems.
+with one transitive relation, decidability of satisfiability was
+claimed~\cite{SzwastTendera2013} and withdrawn by its
+authors~\cite{SzwastTendera2018}. What is proved is decidability when every
+existential quantifier is guarded by the transitive
+relation~\cite{SzwastTendera2018} and decidability of finite
+satisfiability~\cite{PrattHartmann2018}; general satisfiability is open, also
+when the relation is a partial order~\cite{MarzecTendera2026}. The
+partial-order case with unary predicates only is, up to computable
+translations, the satisfiability problem of a syntactic fragment of
+$\ALCIRCC{5}$ that is not contained in the one decided here
+(\S\ref{ssec:bridge}; unreviewed), so the synchronized two-copy encoding of
+\S\ref{sec:reflection} would at best relate two open problems. No reduction of
+$\ALCIRCC{5}$ to a two-variable logic is known. An earlier version of this
+paper cited \cite{SzwastTendera2013} as a decidability theorem; the correction
+is recorded in \texttt{ERRATA.md}.
 
 \paragraph{Formalization.} The proof is checked in Lean~4~\cite{Lean4}. Its
 cumulative development, including the refuted routes, is public.
@@ -1266,6 +1400,11 @@ specifically.
     normalization in prose~\cite{Astra6Review}; this project verified both
     (\texttt{wp136}) and carried the erasure theorem and the order-level
     normalization lemmas into the Lean artifact (\S\ref{ssec:erasure}).
+  \item \textbf{Claude~Fable~5.2} (Anthropic), in one session in November 2026,
+    found that the decidability theorem for two-variable logic cited in earlier
+    versions had been withdrawn, and proved and formalized the poset bridge and
+    the boundary concepts of \S\ref{ssec:bridge}
+    (\texttt{formal/PosetBridge.lean}). This work has not been reviewed.
   \item \textbf{Three fresh model sessions} reviewed the formalization cold
     (\S\ref{ssec:reviews}); their findings are incorporated.
 \end{itemize}
@@ -1283,13 +1422,19 @@ against the control layer; and it records provenance in full.
 
 \paragraph{Artifacts.} The repository is
 \url{https://github.com/lambdamikel/alcircc5}. The formal files are
-\texttt{formal/POFreeLift.lean} and \texttt{formal/RCC5NormalForm.lean}. This
-paper, the overview, and the Lean artifact are frozen at git tag
+\texttt{formal/POFreeLift.lean}, \texttt{formal/RCC5NormalForm.lean} and, for
+\S\ref{ssec:bridge}, \texttt{formal/PosetBridge.lean}. The October 2026 state of
+this paper, of the overview and of the first two files carries the git tag
 \texttt{release-2026-09-14} (moved 2026-10-08 to include the erasure
-extension); relative to \texttt{certified-fragment-2026-08-29} the Lean
-sources add \S\S299--300 and differ otherwise only in the spelling of
-comments. Cite the tag or its commit hash rather than the \texttt{master}
-branch. The review and draft are in
+extension); relative to \texttt{certified-fragment-2026-08-29},
+\texttt{POFreeLift.lean} adds \S\S299--300 and differs otherwise only in the
+spelling of comments, and it has not changed since. The November 2026
+revision---the corrections listed in \texttt{ERRATA.md},
+\texttt{formal/PosetBridge.lean} and the note in
+\texttt{papers/poset\_bridge/}---was made after that tag. Cite a release tag or
+a commit hash that contains the revision you read, not the moving
+\texttt{master} branch; \texttt{ERRATA.md} lists what has been corrected since
+each release. The review and draft are in
 \texttt{papers/gpt-5.6-latest-overview-paper-review-and-recommendation/}, and
 the overview is \texttt{papers/overview\_arxiv.tex}.
 
@@ -1367,7 +1512,8 @@ W.\ Szwast and L.\ Tendera.
 W.\ Szwast and L.\ Tendera.
 \newblock On the satisfiability problem for fragments of two-variable logic
   with one transitive relation.
-\newblock arXiv:1804.09447, 2018 (v3, 2019). Withdraws the main claim
+\newblock \emph{Journal of Logic and Computation}, 29(6):881--911, 2019.
+  arXiv:1804.09447 (2018). Withdraws the main claim
   of~\cite{SzwastTendera2013}.
 
 \bibitem{PrattHartmann2018}
@@ -1389,6 +1535,13 @@ M.\ Wessel.
 \newblock Technical Report FBI-HH-M-324/03, Fachbereich Informatik,
   Universit\"at Hamburg, 2002/2003.
 \newblock \url{https://github.com/lambdamikel/alcircc5/blob/master/papers/report7.pdf}
+
+\bibitem{Wessel2008}
+M.\ Wessel.
+\newblock \emph{Flexible und konfigurierbare Software-Architekturen f\"ur
+  datenintensive ontologiebasierte Informationssysteme}.
+\newblock Dissertation, Technische Universit\"at Hamburg-Harburg, 2008.
+\newblock \url{https://doi.org/10.15480/882.832}
 
 %% --- project documents ---
 

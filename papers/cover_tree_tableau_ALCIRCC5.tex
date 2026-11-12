@@ -102,8 +102,11 @@ lying in sibling subtrees, and so admits only $\DR$ and $\PO$ between them.
 Two such witnesses may be nested, and here they must be.  The ``key
 insight'' of the abstract is therefore sound for nodes that \emph{are} in
 sibling subtrees, but it does not license the restriction of
-equation~\eqref{eq:sibling-compat}.  No wrong \textsc{sat} answer is known;
-the 911-concept suite does not contain the pattern.  Machine-checked:
+equation~\eqref{eq:sibling-compat}.  For the procedure as described here,
+that is, with the role-path check of \S\ref{sec:rolepath}, no wrong
+\textsc{sat} answer is known; before that check was added the implementation
+accepted twelve unsatisfiable concepts (\S\ref{sec:rolepath}).  The
+911-concept suite contains neither pattern.  Machine-checked:
 \texttt{k2\_sat} in \texttt{formal/PosetBridge.lean}; reproduction in
 \texttt{verification/python/wp137\_poset\_bridge\_probe.py}, part~E.
 
@@ -111,7 +114,9 @@ Separately, the sentence in \S\ref{sec:proof-status} that satisfiability
 ``is decidable'' records the project's position in spring~2026 and was
 withdrawn long before this erratum: decidability of full $\ALCIRCC{5}$ is
 \emph{open}.  For the current status see the repository's
-\texttt{README.md} and \texttt{ERRATA.md}.}}
+\texttt{README.md} and \texttt{ERRATA.md}.  A reasoner whose
+\textsc{unsat} answers rest on a completeness proof, at the price of
+termination, is \texttt{src/midelora\_tableau.py}.}}
 \end{center}
 
 \begin{abstract}

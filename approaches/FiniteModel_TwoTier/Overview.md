@@ -6,11 +6,15 @@ model by type.
 **Why it fails in general.** There is no finite-model property — some
 satisfiable concepts require infinite models — and the quasimodel /
 type-elimination procedure over-eliminates (incompleteness, not
-unsoundness). Finiteness is simply the wrong target.
+unsoundness). Finiteness is simply the wrong target. Infinity can even be
+forced without any `∃PP`/`∃PPI` (`spiralConcept`, `formal/PosetBridge.lean`).
+*Finite* satisfiability is a separate question; for the fragment L∥ it is
+decidable in 2-NExpTime by import (Pratt-Hartmann 2018 through the poset
+bridge; not Lean-checked beyond the bridge).
 
 **The win.** One fragment escapes unconditionally: the **∀PO-free**
 concepts (a syntactic case of the two-tier *PO-coherent* fragment). PO is
-the only relation the composition table cannot pin (no backward forcing, no
+the only relation no single composition step pins (no backward forcing, no
 forward absorption); remove the ability to universally constrain it and the
 logic becomes decidable, while still retaining ∃PO, ∀DR, ∃DR, and all
 part-of modalities.
@@ -27,8 +31,10 @@ not GPT-5.5, in this thread.)
 **Certified soundness core (2026-07-18).** Re-examined after the 16th review;
 the chain-unfolding lift is now kernel-checked in
 [`formal/POFreeLift.lean`](../../formal/POFreeLift.lean) (`lift_cc`,
-`unf_is_frame`), and two independent decision procedures agree on the
-fragment with zero mismatches ([`wp86`](../../verification/python/wp86_two_tier_lift_check.py),
+`unf_is_frame`), and two separately built reasoners — neither a decision
+procedure; the cover-tree tableau is incomplete (`ERRATA.md`, E2), by a defect
+that needs a `∀PO` and so cannot arise here — agree on the fragment with zero
+mismatches ([`wp86`](../../verification/python/wp86_two_tier_lift_check.py),
 [`wp87`](../../verification/python/wp87_po_free_end_to_end.py)). Full
 end-to-end certification along *these* lines was never completed: the
 extraction architecture it needed was refuted in August 2026. The fragment was

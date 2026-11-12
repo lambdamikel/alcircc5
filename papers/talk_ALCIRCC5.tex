@@ -65,7 +65,7 @@
 \author{Michael Wessel\\[2pt]
   {\small with AI assistants: Claude Opus~4.6--4.8, Fable~5, Opus~5 (Anthropic);\\
   GPT-5.4, 5.4~Pro, 5.5, 5.6~Pro, 5.6~Sol (OpenAI)}}
-\date{September 2026}
+\date{November 2026}
 
 \begin{document}
 
@@ -89,7 +89,7 @@
   The mathematics is AI-produced and \emph{unverified by human experts}.
   Standing label for the \alert{full logic}: \statuslabel{}\,---\,%
   but the $\forall\PO$-free fragment is
-  \textcolor{good}{\textbf{machine-certified}}, reviewed three times.
+  \textcolor{good}{\textbf{machine-certified}}, reviewed five times.
 \end{block}
 \end{frame}
 
@@ -211,7 +211,7 @@ So Hamburg \emph{is} a German city --- and every hidden fact reduces to
   \[
     \forall\PP.\,\neg\textsf{Lake} \qquad \exists\DR.\,\textsf{Reserve}
   \]
-  ``no part is a lake'', ``disjoint from some reserve''.
+  ``inside no lake'', ``disjoint from some reserve''.
 \column{.42\textwidth}
   \begin{block}{Why this is different}
     Concrete-domain DLs constrain spatial \emph{attributes} of objects.
@@ -235,7 +235,7 @@ to work on.
 \column{.31\textwidth}
 \begin{center}\textbf{no finite models}\end{center}
 $\exists\PPI.\top \sqcap \forall\PPI.\exists\PPI.\top$ forces an infinite
-ascending part-of tower.
+descending part-of tower.
 \column{.31\textwidth}
 \begin{center}\textbf{nondeterministic table}\end{center}
 Most cells allow several outcomes --- composition \emph{constrains} but
@@ -294,9 +294,9 @@ Recognized open by the leading experts --- for \alert{twenty years}.
 \end{center}
 \vfill
 \begin{itemize}
-  \item Depth (nesting) is \alert{never the problem} --- ordinary modal-logic folding handles it.
-  \item Everything hard lives in \alert{horizontal crowds}: many pairwise-distinct
-        neighbours that no finite summary seems to capture.
+  \item On \alert{our route}, depth is not the problem --- vertical towers fold.
+  \item What resists is \alert{horizontal coordination}: crowds, and nesting
+        forced by \emph{excluding} overlap and disjointness.
 \end{itemize}
 \end{frame}
 
@@ -451,10 +451,11 @@ March--July 2026.
   \item $\sim$4 months, $\sim$\alert{30 repair rounds}
   \item \alert{22 adversarial reviews} --- a defect or overclaim found in
         all but \emph{three} (the 22nd found nothing to correct)
-  \item \alert{95} self-contained verification probes (each re-derives the
-        algebra from set semantics)
-  \item 5 Lean files, $\sim$\alert{52{,}000 lines}, \alert{zero \texttt{sorry}}
-  \item 2 working reasoners, cross-validated on a \alert{911-case} suite
+  \item \alert{98} verification probes (the algebra re-derived from set
+        semantics)
+  \item 6 Lean files, $\sim$\alert{53{,}000 lines}, \alert{zero \texttt{sorry}}
+  \item 3 reasoners agreeing on a \alert{911-case} suite --- none a decision
+        procedure
 \end{itemize}
 \column{.48\textwidth}
 \begin{block}{The most telling pattern}
@@ -590,6 +591,9 @@ Result & Meaning & File\\
 \textcolor{good}{\textbf{Abstract $=$ concrete}} &
   composition table $\Leftrightarrow$ real sets (cf.\ L\&W Thm~23) &
   \texttt{POFreeLift}\\
+\textcolor{good}{\textbf{Poset bridge}} \tiny(unreviewed) &
+  \normalsize a fragment $\Leftrightarrow$ FO$^2$ on a partial order &
+  \texttt{PosetBridge}\\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -659,7 +663,8 @@ theorems --- never axiomatized, never proved.
         between two different children is the residual, and the residual is
         free. That is why the construction needs no joint realizability.
   \item Put $\forall\PO$ back and you do not lose one case of one induction
-        --- you lose \alert{the default itself}. That is the whole boundary.
+        --- you lose \alert{the default itself}. That is the whole boundary
+        \emph{of this construction}.
   \item The arrangement it builds is a \alert{split forest} --- part-of trees,
         horizontal relations read off: Route~2's whiteboard idea,
         \emph{built} rather than extracted.
@@ -785,7 +790,7 @@ prefix classes & \xmark & unbounded $\forall\exists$ alternation, FMP\\
 guarded / clique-guarded & \xmark & \alert{totality} is the one unguardable axiom\\
 unary/guarded negation & \xmark & finite model property; totality again\\
 guarded + transitivity & \xmark & undecidable outside guards\\
-FO$^2$ + 1 transitive rel. & \textbf{?} & decidable; a 2-copy encoding \emph{nearly} fits\\
+FO$^2$ on a partial order & \textbf{?} & \alert{open}; a fragment of ours \emph{is} it\\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -794,25 +799,44 @@ The failure that matters traces to one fact: \alert{every pair is related},
 so models are maximally non-local --- the obstruction F6 names.
 \end{frame}
 
+%% ==================================================================== 28b
+\begin{frame}{November 2026: what moved (unreviewed)}
+\begin{itemize}
+  \item \alert{Erratum.} ``FO$^2$ with one transitive relation is decidable''
+        (2013) was withdrawn by its authors in 2018. Open, also for one
+        partial order.
+  \item \alert{The bridge} (Lean-checked). A syntactic fragment of
+        $\ALCIRCC{5}$ \emph{is} two-variable logic over a strict partial
+        order with unary predicates. So the full logic contains an open
+        problem. No reduction back is known.
+  \item \alert{By import} (not Lean-checked): that fragment is decided with
+        vertical witnesses only, and for finite models --- the first decided
+        slice in which a $\forall\PO$ changes the answer.
+  \item \alert{Infinity without $\exists\PP$, $\exists\PPI$}
+        (Lean-checked): forced by \emph{forbidding} overlap and disjointness.
+  \item \alert{Reasoners.} The tableau is incomplete; the 2008 MiDeLoRa
+        tableau is sound and complete on paper, but does not terminate.
+\end{itemize}
+\end{frame}
+
 %% ==================================================================== 29
 \section{The reasoner: a 23-year loop closed}
-\begin{frame}{A working prototype reasoner (validated, not proved)}
+\begin{frame}{The reasoners (tested, not proved)}
 \begin{itemize}
-  \item The \alert{cover-tree tableau} ($\sim$350 lines of Python):
+  \item The \alert{cover-tree tableau} ($\sim$770 lines of Python):
         exact-occurrence blocking on the split-forest foundation.
   \item A \alert{911-case suite} (99 labelled, 812 oracle comparisons) ---
-        \alert{zero mismatches}; $775/775$ decomposition tests. One latent gap,
-        found by code review (April), fixed without changing a verdict.
-  \item \alert{One wrong verdict} (found Nov.\ 2026): it rejects a satisfiable
-        concept whose two overlap-witnesses must be \emph{nested}. Incomplete,
-        not unsound.
-  \item Decides correctly even the known trap (the strong-$\EQ$ $\PO$-loop)
-        that fools type-based procedures.
+        \alert{zero mismatches}; $775/775$ decomposition tests.
+  \item \alert{Shown wrong twice.} April 2026: it accepted twelve
+        unsatisfiable concepts (repaired). Nov.\ 2026: it rejects a satisfiable
+        one whose overlap-witnesses must be \emph{nested}.
+  \item New: a \alert{reference reasoner} --- the 2008 MiDeLoRa tableau,
+        re-implemented: sound and complete on paper, no termination.
 \end{itemize}
 \vfill
 \begin{center}
-A running algorithm and a kernel-checked surround, \alert{pointing the same
-way} --- evidence, not a proof.
+Subsumption verdicts are \textsc{unsat} tests, where the tableau can err ---
+\alert{evidence, not a proof}.
 \end{center}
 \end{frame}
 
@@ -847,8 +871,8 @@ not a tree.)}
 \begin{itemize}
   \item months-long rigorous formal development, $\sim$30 rounds
   \item genuinely useful \emph{adversarial} review (with machine-checked witnesses)
-  \item a $\sim$52{,}000-line kernel-checked Lean development
-  \item working, validated software
+  \item a $\sim$53{,}000-line kernel-checked Lean development
+  \item working, tested software
 \end{itemize}
 \column{.48\textwidth}
 \textbf{\textcolor{openc}{Not demonstrated}}
@@ -896,7 +920,7 @@ to call it was the human's --- \alert{we cannot automate that}.
         memory of the construction found what warm reviewers missed ---
         every time it mattered. Make it a standard step.
   \item \textbf{Don't trust --- verify.} We cross-checked load-bearing claims
-        mechanically: 95 probes that re-derive the algebra from set
+        mechanically: 98 probes that re-derive the algebra from set
         semantics, and ultimately the Lean kernel. The machine checks are
         the ground truth, \alert{not the model's confidence}.
   \item \textbf{Label honestly.} \emph{Strongly supported} $\neq$
@@ -934,7 +958,7 @@ adversarial review, honest labels --- matter more than ever.}
 \begin{frame}{The results, by verification level}
 \begin{center}
 \scriptsize
-\renewcommand{\arraystretch}{0.98}
+\renewcommand{\arraystretch}{0.86}
 \begin{tabular}{@{}p{2.3cm}p{6.1cm}p{2.6cm}@{}}
 \toprule
 \textbf{Level} & \textbf{Results} & \textbf{What it means}\\
@@ -942,8 +966,8 @@ adversarial review, honest labels --- matter more than ever.}
 \textcolor{good}{\textbf{Lean-certified}} &
   \textbf{$\forall\PO$-free decidability} (raw, NNF, sets; $+$ the
   PO-erasure slice \emph{containing} $\forall\PO$); abstract $=$ concrete;
-  soundness pipeline; faithfulness; normal form; conditional reductions
-  \emph{as conditionals} &
+  soundness pipeline; normal form; conditional reductions \emph{as
+  conditionals}; poset bridge (unreviewed) &
   kernel-checked, stated axioms\\
 \addlinespace
 \textbf{Published} &
@@ -952,16 +976,17 @@ adversarial review, honest labels --- matter more than ever.}
   an external theorem, cited\\
 \addlinespace
 \textbf{Theorem-level} &
-  the fragment's two \emph{arguments} ($K(C_0)$, extraction); W2$'$ refinement &
+  the fragment's two \emph{arguments}; W2$'$ refinement; two slices by
+  import; MiDeLoRa completeness &
   proof in a work package\\
 \addlinespace
 \textbf{Empirical} &
-  cover-tree tableau; 911-case suite; model verifier &
+  cover-tree tableau (\emph{incomplete}); reference reasoner; 911-case suite &
   test evidence, not a decision theorem\\
 \addlinespace
 \textcolor{openc}{\textbf{Open}} &
   F6; whether identity-selector minors are its only obstruction;
-  completeness of the certificate scheme; full decidability &
+  certificate completeness; FO$^2$ on a partial order; full decidability &
   no proof claimed\\
 \bottomrule
 \end{tabular}
@@ -984,10 +1009,9 @@ adversarial review, honest labels --- matter more than ever.}
   \item NO $\Rightarrow$ our route can close; YES $\Rightarrow$ it fails, and
         undecidability would still need a grid.
   \item One \alert{sub-problem off the pile}: $\forall\PO$ dropped ---
-        decided in the kernel (own paper); extended 2026-10 to a slice
-        \alert{containing} $\forall\PO$.
-  \item Reproducible: 5 Lean files ($\sim$52k lines, 0 \texttt{sorry}), 95
-        probes, 2 reasoners, full log.
+        decided in the kernel (own paper).
+  \item New, unreviewed: it \alert{contains} FO$^2$ on a partial order --- open.
+  \item 6 Lean files (0 \texttt{sorry}), 98 probes, 3 reasoners, log, errata.
 \end{itemize}
 \vfill
 \begin{center}

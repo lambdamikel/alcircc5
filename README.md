@@ -20,8 +20,9 @@ decision procedure the Lean kernel checks end to end** — written up on its own
 <p align="center"><em>Wessel's 2002/2003 construction of an RCC8 network isomorphic to an n×n grid (<a href="papers/report7.pdf">report7</a>, Fig. 10) — found by a Lisp enumerator program and rendered with CLIM (MCL), not drawn by hand. Such grid models <strong>exist</strong> — yet no concept term is known that <strong>forces</strong> one. That gap (the "coincidence obstruction") is exactly why the problem has resisted both a decidability and an undecidability proof for two decades.</em></p>
 
 > **Disclaimer.** The papers and code here were produced by AI assistants
-> (Claude Opus 4.6/4.7/4.8, Claude Fable 5 and Claude Opus 5 / Anthropic;
-> GPT-5.4, GPT-5.4 Pro, GPT-5.5, GPT-5.6 Pro and GPT-5.6 Sol / OpenAI),
+> (Claude Opus 4.6/4.7/4.8, Claude Fable 5, Claude Opus 5 and, for the
+> 2026-11-11 work, Claude Fable 5.2 / Anthropic; GPT-5.4, GPT-5.4 Pro, GPT-5.5,
+> GPT-5.6 Pro, GPT-5.6 Sol and Astra 6 / OpenAI),
 > prompted and directed by Michael Wessel. They have **not** been peer-reviewed or verified by
 > human domain experts, and are offered as a **discussion piece**. Standing
 > label for the **full logic**: **strongly supported, not certified**. The
@@ -68,8 +69,8 @@ of the non-technical
 for a reader who knows description logics, tableaux, and blocking (but not
 automata or model theory), it explains the finite-certificate architecture,
 the handful of composition-table facts everything rides on (four
-deterministic cells; PO forced by nothing yet available wherever anything
-is), and **both independent proof routes** — the two-tier quotient
+deterministic cells; PO forced by no single step yet available wherever
+anything is), and **both independent proof routes** — the two-tier quotient
 (chain-and-phase) and the ordered-disjoint normal form (structural) —
 at "yes, I believe that" depth rather than full-proof depth, with an
 honest per-claim status table (what is Lean-certified vs. machine-checked
@@ -82,7 +83,7 @@ dated audit trail in [CONVERSATION.md](CONVERSATION.md), the Lean history in
 
 ## Status
 
-**Where things stand (2026-10-08).** Decidability of **full** ALCI_RCC5 (and
+**Where things stand (2026-11-11).** Decidability of **full** ALCI_RCC5 (and
 ALCI_RCC8) **remains open**. The **∀PO-free fragment is decided**, by a decision
 procedure checked end to end in Lean with fragment membership as its only
 hypothesis, and written up on its own in
@@ -97,11 +98,16 @@ concept, with no computable bound. The full-logic line of attack has been paused
 2026; what a future attack needs is recorded in the overview's conclusion and in
 [`papers/cold_review_f6_w2prime/`](papers/cold_review_f6_w2prime/). A 2026-10-08
 harvest from the 22nd review extended the decided fragment to a slice
-*containing* `∀PO` (the PO-erasure fragment 𝒟, Lean-certified). Cite the
-release **`release-2026-09-14`** (moved to include the harvest). Each major
-revision is recorded below, newest first. **Since then (2026-11-11):** the full
-logic is shown to contain the unary case of an open problem of two-variable
-logic — see the first entry.
+*containing* `∀PO` (the PO-erasure fragment 𝒟, Lean-certified).
+**2026-11-11 (unreviewed):** the full logic is shown to contain the unary case
+of an open problem of two-variable logic; the cover-tree tableau is found
+incomplete; a cited theorem about two-variable logic turned out to have been
+withdrawn; and the documents were re-synced the same day, which turned up a
+third erratum. See the first entry below and [`ERRATA.md`](ERRATA.md). The tag
+**`release-2026-09-14`** (commit `52d392e`, including the October harvest)
+predates all of this, and its PDFs carry the statements the errata correct:
+cite a release tag or commit that contains the revision you read. Each major
+revision is recorded below, newest first.
 
 ### 2026-11-11 — The poset bridge: an open problem of two-variable logic sits inside the full logic
 
@@ -140,9 +146,12 @@ exact strength: [`papers/poset_bridge/`](papers/poset_bridge/README.md).*
 - **A wrong verdict of the cover-tree tableau.** `K2 = ∃PO.(A ⊓ ∀PO.¬B ⊓ ∀DR.¬B)
   ⊓ ∃PO.(B ⊓ ¬A)` has a three-region model (`k2_sat`); the tableau answers
   UNSAT, because it admits only `DR`/`PO` between two horizontal witnesses of one
-  node and these two must be nested. The tableau is **incomplete**; its SAT
-  answers remain unrefuted. The sentence "no verdict … has ever been shown wrong"
-  is corrected in this README, the overview and the slides.
+  node and these two must be nested. The tableau is **incomplete**. The
+  sentence "no verdict … has ever been shown wrong" is corrected in this README,
+  the overview and the slides — and it had been false before `K2`: in April 2026
+  a review showed the tableau as then committed accepting twelve unsatisfiable
+  concepts, repaired the same day (`ERRATA.md`, E3, found during the re-sync
+  below). Since that repair no wrong SAT answer is known.
 - Probe: [`wp137`](verification/python/wp137_poset_bridge_probe.py) — the bridge
   re-checked by brute force against a table derived from set semantics, the
   spiral's finite non-models, and both reasoners on `K2`; 27/27 pass.
@@ -165,8 +174,17 @@ exact strength: [`papers/poset_bridge/`](papers/poset_bridge/README.md).*
   reasoner itself is not fixed, and its header says so. Tag `release-2026-09-14`
   predates these corrections.
 - **Untouched:** F6, bare `∀PO` (`C_bad`, `C_joint`), and how `DR`'s downward
-  closure interacts with `∀PO`. The papers were corrected, not re-synced: their
-  status tables do not yet list the two imported slices.
+  closure interacts with `∀PO`.
+- **The documents, re-synced (same day).** The overview (65 pp; a new
+  subsection on the bridge, a corrected reasoner section, status and artifact
+  tables), the fragment paper (22 pp; a new subsection on what lies just
+  outside), the slides (44 pp; one new slide), the explainer (20 pp),
+  `WHY_ITS_HARD.md`, `LEAN.md`, the approach pages and this README were read in
+  full against the new results and corrected. Besides the missing material
+  that turned up: a slide that still stated the withdrawn theorem as fact;
+  "two independent decision procedures" in two places; three places saying
+  sideways chains always fold, which the spiral contradicts; a wrong tower
+  direction; a stale "cite the tag" instruction; and erratum E3.
 
 ### 2026-10-08 — The 22nd review (Astra 6): audit passed, and a certified extension of the fragment
 
@@ -486,16 +504,21 @@ RCC*k* relation sets coarsen as *k* decreases; RCC1–3 are decidable
 
 | Logic | Base relations | Concept satisfiability |
 |---|---|---|
-| ALCI (no RCC) | arbitrary roles | ExpTime-complete (known) |
+| ALCI (no RCC) | arbitrary roles | PSpace-complete (no TBox); ExpTime-complete with TBoxes |
 | ALCI_RCC1 | {SR} | decidable; NP-complete (≡ S5) |
 | ALCI_RCC2 | {DR, O} | decidable; NP-hard, in PSpace |
 | ALCI_RCC3 | {DR, ONE, EQ} | decidable; NP-hard |
-| ALCI_RCC5, ∀PO-free | RCC5 without ∀PO | **decidable** (this project) |
-| ALCI_RCC5 (full) | {DR, PO, EQ, PP, PPI} | **open**; PSpace-hard |
+| ALCI_RCC5, ∀PO-free | RCC5 without ∀PO | **decidable** (this project; Lean-certified) |
+| ALCI_RCC5, fragment 𝒟 | no ∃PP/∃PO/∀DR; ∀PO allowed | **decidable** (Lean-certified) |
+| ALCI_RCC5, L∥ with vertical witnesses only | see [`papers/poset_bridge/`](papers/poset_bridge/README.md) | decidable, in 2-NExpTime (by import through the poset bridge; unreviewed) |
+| ALCI_RCC5, L∥, finite satisfiability | as above | decidable, in 2-NExpTime (by import; unreviewed) |
+| ALCI_RCC5, L∥ | as above | **open** — the same problem as two-variable logic over strict partial orders with unary predicates |
+| ALCI_RCC5 (full) | {DR, PO, EQ, PP, PPI} | **open**; PSpace-hard; contains L∥ |
 | ALCI_RCC8 | eight RCC8 relations | **open**; ExpTime-hard |
 
-Both directions rely on the **patchwork property** of RCC5/RCC8 (Renz &
-Nebel 1999): path-consistent atomic networks are globally consistent.
+The uncertified routes rely on the **patchwork property** of RCC5/RCC8 (Renz &
+Nebel 1999): path-consistent atomic networks are globally consistent. The
+certified fragment does not.
 
 ## The reasoner, and a GIS example spanning 23 years
 
@@ -504,12 +527,15 @@ reasoner** ([`src/cover_tree_tableau.py`](src/cover_tree_tableau.py)) —
 agreeing with an independent oracle across a **911-case** suite (99 labelled
 cases, 812 comparison runs) with **zero mismatches**. It is incomplete: it
 rejects the satisfiable concept `K2`, whose two overlap-witnesses must be nested
-(found 2026-11-11; see Status). Its SAT answers are unrefuted. Its most
+(found 2026-11-11; see Status). It has also been shown wrong in the other direction: in April 2026 a review found it accepting twelve unsatisfiable concepts, repaired the same day; since then no wrong SAT answer is known ([`ERRATA.md`](ERRATA.md), E3). Its most
 satisfying test spans 23 years: it recomputes, in 2026, the exact GIS
 concept taxonomy that a **prototype reasoner** computed in Wessel's 2003
-report (report7, §4.3.1: "actually computed by a working prototype system")
+report (report7, end of §3: "actually computed by a working prototype system")
 — all **21/21** subsumptions, multiple inheritance and all. Two reasoners,
-23 years apart, agreeing edge for edge.
+23 years apart, agreeing edge for edge. Subsumption is tested as
+unsatisfiability, the direction in which the tableau is incomplete; the 21
+subsumptions count as evidence because the 2003 result agrees, not on the
+tableau's authority.
 
 Since 2026-11-11 there is also a **reference reasoner**
 ([`src/midelora_tableau.py`](src/midelora_tableau.py)): a Python
@@ -544,12 +570,13 @@ a short hub (`Overview.md`) linking to that route's manuscripts, probes, and
 the relevant section of the paper (no files are moved — the hubs link to
 canonical locations):
 
-- [`Tableaux/`](approaches/Tableaux/Overview.md) — naive tableau + blocking; the cover-tree tableau.
+- [`Tableaux/`](approaches/Tableaux/Overview.md) — naive tableau + blocking; the cover-tree tableau; the MiDeLoRa reference tableau.
 - [`FiniteModel_TwoTier/`](approaches/FiniteModel_TwoTier/Overview.md) — finite-model attempts; the two-tier quotient; the **∀PO-free decidable fragment**.
 - [`SplitForest/`](approaches/SplitForest/Overview.md) — the split-forest normal form (the sound semantic foundation).
 - [`NoAutomataCertificate/`](approaches/NoAutomataCertificate/Overview.md) — the rounds-2–10 hand certificate.
 - [`Automata_Parity/`](approaches/Automata_Parity/Overview.md) — the two-way parity tree-automaton route.
-- [`Lean_F6/`](approaches/Lean_F6/Overview.md) — the Lean formalization and the reduction to F6. *(The **cone scheme** — the route that certified the fragment, superseding the per-quadrant one — has no hub of its own: it lives in [`formal/POFreeLift.lean`](formal/POFreeLift.lean), with design in [`papers/cone_scheme_plan/`](papers/cone_scheme_plan/) and provenance in [`ASSEMBLY_DESIGN.md`](ASSEMBLY_DESIGN.md) §§267–297.)*
+- [`Lean_F6/`](approaches/Lean_F6/Overview.md) — the Lean formalization and the reduction to F6.
+- [`ConeScheme/`](approaches/ConeScheme/Overview.md) — the cone scheme: the route that certified the ∀PO-free fragment, and its PO-erasure extension.
 - [`RegularCovers/`](approaches/RegularCovers/Overview.md) — the regular-cover pivot and the certified RCC5 normal form.
 
 ## Build & run
@@ -571,20 +598,18 @@ python3 gis_taxonomy.py              # reproduces the 2003 GIS taxonomy (21/21)
 python3 midelora_tableau.py          # reference reasoner (complete-graph tableau; a few examples)
 ```
 
-Check the Lean development (Lean 4.32.0 via `elan`; no mathlib):
+Check the Lean development (Lean 4.33.1, pinned; no mathlib; a bare `lean`
+uses elan's default, which has moved on):
 
 ```
-cd formal && lean Round19Transport.lean   # see LEAN.md for all artifacts
+cd formal
+L="elan run leanprover/lean4:v4.33.1 lean"
+$L Round19Transport.lean                        # see LEAN.md for all artifacts
+$L -o POFreeLift.olean POFreeLift.lean          # the certified fragment, ~1 min
+LEAN_PATH=. $L PosetBridge.lean                 # imports it
 ```
 
-The poset bridge imports the certified artifact, so it builds in two steps
-(Lean 4.33.1):
-
-```
-cd formal && lean -o POFreeLift.olean POFreeLift.lean && LEAN_PATH=. lean PosetBridge.lean
-```
-
-The self-contained verification probes are in
+The verification probes are in
 [`verification/python/`](verification/python/) (WP1–WP139; the latest —
 wp136 audit of the Astra 6 review, wp137 the poset bridge, wp138 the tableau's
 nested-witness flag, wp139 the reference reasoner).
@@ -592,8 +617,10 @@ nested-witness flag, wp139 the reference reasoner).
 ## Repository map
 
 - [`papers/`](papers/) — LaTeX sources and PDFs. **`overview_arxiv.*` is the
-  primary deliverable**; other papers are per-approach manuscripts (linked
-  from the hubs).
+  primary deliverable** and `pofree_fragment_arxiv.*` its focused companion;
+  other papers are per-approach manuscripts (linked from the hubs).
+  `papers/poset_bridge/` and `papers/midelora_calculus/` are the notes of
+  2026-11-11, and `papers/fable-5.2/` that session's handoff record.
 - [`src/`](src/) — the reasoners (cover-tree tableau, quasimodel oracle,
   the MiDeLoRa-style reference reasoner, model verifier).
 - [`formal/`](formal/) — the Lean 4 development (`POFreeLift.lean`, the

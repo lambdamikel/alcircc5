@@ -7,7 +7,7 @@
 \usepackage{xcolor}
 
 \hypersetup{pdftitle={Why the forall-PO-Free Fragment Is Decidable},
-  pdfauthor={Michael Wessel --- with Claude (Opus 4.8, Anthropic)}}
+  pdfauthor={Michael Wessel --- with Claude (Opus 4.8, Opus 5, Fable 5.2; Anthropic)}}
 
 \newcommand{\ALCIRCC}{\ensuremath{\mathcal{ALCI}_{\mathrm{RCC5}}}}
 \newcommand{\DR}{\ensuremath{\mathsf{DR}}}
@@ -26,11 +26,12 @@
 \large A Guide for the Tableau-Minded}
 \author{Michael Wessel --- with Claude Opus~4.8 and Claude Opus~5
 (Anthropic)\thanks{Opus~4.8 wrote this explainer in July 2026; Opus~5 revised
-it in August after the fragment was machine-certified, and in September after
-a further cold review. The routes it describes
+it in August after the fragment was machine-certified, in September after
+a further cold review, and in October after the Astra~6 review; Claude
+Fable~5.2 corrected and updated it in November 2026. The routes it describes
 are due to several models and are attributed individually in
 \S\ref{sec:ledger}.}}
-\date{2026-08-29, revised 2026-09-14 and 2026-10-08}
+\date{2026-08-29, revised 2026-09-14, 2026-10-08 and 2026-11-11}
 
 \begin{document}
 \maketitle
@@ -86,7 +87,32 @@ decided, provided $\exists\PP$, $\exists\PO$ and $\forall\DR$ are absent ---
 erase each $\forall\PO.D$ to $\top$ and run the certified procedure. Inside
 that fragment the $\forall\PO$ restrictions are provably vacuous (the witness
 forest has no $\PO$ pair at all), so the boundary story of this explainer is
-unchanged: $\forall\PO$ is harmless exactly where it cannot bite.}}
+unchanged: $\forall\PO$ is harmless exactly where it cannot bite. (Since
+2026-11-11 a slice in which it does bite is decided by import; see the next
+update.)}}
+\end{center}
+
+\begin{center}
+\fbox{\parbox{0.92\textwidth}{\itshape
+\textbf{Update (2026-11-11; unreviewed):} one further session changed what is
+known just \emph{outside} the fragment; nothing certified here is affected
+(\code{POFreeLift.lean}, now $46{,}032$ lines, is unchanged). (i)~The concepts
+that use $\exists\DR$ only inside $\exists\PO.C\sqcup\exists\DR.C$ and
+$\forall\PO$ only inside $\forall\PO.C\sqcap\forall\DR.C$ have the same
+satisfiability problem as two-variable logic over strict partial orders with
+unary predicates (Lean: \code{poset\_bridge}, \code{patsys\_to\_rcc5} in
+\code{formal/PosetBridge.lean}; one textbook normal-form step is not
+formalized). General satisfiability of that logic is open, so the full logic
+contains an open problem of two-variable logic; no reduction the other way is
+known. (ii)~Through that bridge two slices containing $\forall\PO$ are decided
+by published theorems --- not by this project and not in Lean --- and in one
+of them a $\forall\PO$ conjunct can change the answer, unlike in the erasure
+fragment above. (iii)~Outside the fragment infinity needs no vertical witness:
+a Lean-checked concept with no $\exists\PP$ and no $\exists\PPI$ has only
+infinite models. (iv)~The cover-tree tableau is incomplete: it answers
+\textsc{unsat} on a satisfiable concept that contains $\forall\PO$; and a
+cited theorem on two-variable logic turned out to have been withdrawn. See
+\code{ERRATA.md} and \code{papers/poset\_bridge/README.md}.}}
 \end{center}
 
 \section{The claim}\label{sec:claim}
@@ -417,7 +443,7 @@ $R$-neighbors around predictably:
   (the two non-singleton cells), and $\PO$ is never created by any
   single composition --- so the obligation must be re-verified against
   a set of neighbors that the algebra refuses to pin down. The
-  recurring failure shape across this project's seventeen-review
+  recurring failure shape across this project's twenty-two-review
   history --- jointly coordinating horizontal edges against universal
   obligations at a gluing step --- is only \emph{hard} for edges no
   singleton cell controls; and $\PO$ is the relation with no singleton
@@ -627,7 +653,8 @@ argument)}\label{sec:route2}
 {\small(The regular-cover pivot, GPT-5.5, July 2026:
 \code{papers/rcc5\_local\_amalgamation\_theory.tex}, probes
 \code{wp47}--\code{wp49}, \code{wp82}/\code{wp83}; normal form
-certified in \code{formal/RCC5NormalForm.lean}, both directions.)}
+certified in both directions: the forward one and the set representation in
+\code{RCC5NormalForm.lean}, the converse in \code{POFreeLift.lean}.)}
 
 Route 1 fought the composition table cell by cell. Route 2 wins by
 changing the data structure so the fight never starts.
@@ -801,9 +828,31 @@ constructor --- the universal over the one relation the singleton cells
 don't control --- and the coordination problem that every full-logic
 attempt has broken on dissolves. ($\forall\DR$ also coordinates
 horizontal edges, but its coordination is \emph{deterministic}, which
-is exactly why it may stay.) The fragment is thus not a lucky island;
-it is the complement of the obstruction, and its proof shows \emph{why}
-the obstruction is where it is.
+is exactly why it may stay.) The fragment is thus not a lucky island:
+it is where the obstruction cannot arise, and its proof shows \emph{why}
+the obstruction is where it is. It is not the whole of what is decidable.
+
+\paragraph{What the boundary is a boundary of (added 2026-11-11,
+unreviewed).} The checks above show that $\forall\PO$-freeness is where
+\emph{this argument} stops: the maximally-$\PO$ completion is available
+exactly when nothing can object to a $\PO$ edge. They do not show that
+decidability stops there. Two slices containing $\forall\PO$ are decidable:
+the erasure fragment of the honesty note, where $\forall\PO$ is vacuous, and
+--- by import of a published theorem on two-variable logic, not by this
+project and not in Lean --- the concepts that use $\forall\PO$ only as
+$\forall\PO.C\sqcap\forall\DR.C$ and have neither $\exists\PO$ nor
+$\exists\DR$. In the second a $\forall\PO$ conjunct can change the answer:
+three superpart witnesses can be forced into a cycle of nestings that no
+pairwise test sees ($C_{\mathrm{cyc}}$; Lean: \code{ccyc\_unsat},
+\code{ccycErased\_sat}). What lies just outside also has an exact name now:
+allowing in addition $\exists\PO.C\sqcup\exists\DR.C$ gives a fragment whose
+satisfiability problem is that of two-variable logic over strict partial
+orders with unary predicates (\code{poset\_bridge}, \code{patsys\_to\_rcc5};
+one textbook normal-form step is not formalized), and general satisfiability
+of that logic is open. The full logic contains that problem; no reduction the
+other way is known. Two more Lean-checked concepts sit there: $K_2$,
+satisfiable only with two overlap witnesses nested, and a concept without
+$\exists\PP$ or $\exists\PPI$ that has only infinite models.
 
 \paragraph{A corollary: in the fragment, identity can never be forced.}
 The project's knife's-edge analysis (the coincidence obstruction of the
@@ -827,7 +876,7 @@ undecidability \emph{machinery} cannot even be assembled.
 \section{So --- was it proved twice, or three times?}\label{sec:ledger}
 
 Honest ledger. There are \textbf{two genuinely different argument
-shapes} and \textbf{three arrivals} in this explainer, plus a \textbf{fourth
+shapes} and \textbf{three arrivals} in this explainer, plus a \textbf{third
 shape} that is the one actually certified (item~5 below), and the
 certification pass itself.
 
@@ -861,13 +910,18 @@ certification pass itself.
   \S\ref{sec:algebra}), the fragment was re-examined: it holds, the
   argument enforces full composition closure, and the soundness crux
   --- the chain-unfolding lift --- was kernel-checked
-  (\code{POFreeLift.lean}, zero sorries). Additionally, two
-  \emph{independent} reasoners (the cover-tree tableau and
-  the quasimodel reasoner; neither is a proven decision procedure, and the
-  tableau is now known to be incomplete outside the fragment) were run on 244 random and curated
-  $\forall\PO$-free concepts with zero mismatches (\code{wp87}) --- a
-  clean cross-validation, because the quasimodel oracle's one known
-  blind spot needs a $\forall\PO$ and so cannot arise in the fragment.
+  (\code{POFreeLift.lean}, zero sorries). Additionally, two separately built
+  reasoners (the cover-tree tableau and the quasimodel reasoner, which share
+  the concept syntax and the composition-table code) were run on 244 random
+  and curated $\forall\PO$-free concepts with zero mismatches (\code{wp87}).
+  Neither is a decision procedure. The quasimodel reasoner is incomplete on
+  the strong-$\EQ$ $\PO$-loop; the tableau is incomplete on $K_2$ (found
+  November 2026) and returned wrong \textsc{sat} answers, some on
+  $\forall\PO$-free concepts, until a repair on 18~April 2026, before this
+  run. Both known incompleteness patterns need a $\forall\PO$ and cannot arise
+  in the fragment, which is what makes the agreement evidence; it is not a
+  proof, and a suite with zero mismatches has twice missed a defect of the
+  tableau (\code{ERRATA.md}).
 \item \textbf{August 2026 --- the ConeScheme route, and the one that is
   certified} (design: GPT-5.6~Sol, prompted by Wessel after two rounds of
   cold attack had refuted the previous certification architecture; Lean
@@ -883,8 +937,8 @@ certification pass itself.
   reused edges induce must stay acyclic, and the relations they force must be
   \emph{jointly} realizable --- while every discipline proposed for enforcing it
   was a \emph{local} test, per edge or per node or per type. A local test cannot
-  see what it is not looking at, and the four countermodels say so one axis at a
-  time: per-edge safety removes self-loops and nothing longer (two individually
+  see what it is not looking at, and three of the four countermodels say so one
+  axis at a time: per-edge safety removes self-loops and nothing longer (two individually
   safe fallbacks forming a four-cycle); a key read off an occurrence's downward
   cone cannot separate occurrences whose obstruction is \emph{horizontal}; a
   class top defined by type alone drags one member's disjointness witness onto
@@ -901,7 +955,7 @@ certification pass itself.
 
   The frame conditions that had defeated the previous architecture ---
   irreflexivity of the order, and its disjointness from the disjointness
-  relation --- then hold \emph{structurally} rather than by construction.
+  relation --- then hold \emph{structurally} rather than by a test.
   The \emph{completeness} half inverts what every earlier route attempted.
   Those read completeness as \emph{extraction} --- given a model, build a finite
   certificate out of it --- and that construction is where the $K(C_0)$ budgets
@@ -940,6 +994,17 @@ certification pass itself.
   fragment but not on the full-logic \textsc{unsat} test built from the same
   machinery --- and the third found no defect in the development at all, its
   five findings all lying in the project's own probes and prose.
+\item \textbf{2026-09-09 --- a fourth review} (GPT-5.6~Sol): a source-level
+  audit that found no defect in the Lean; its findings concerned the
+  overview's framing, and it recommended the focused paper.
+\item \textbf{2026-10-07 --- a fifth review, and an extension} (Astra~6): no
+  gap found; its $\PO$-erasure theorem was verified and certified
+  (\code{erase\_equisat}, \code{decidableSat\_dfrag}).
+\item \textbf{2026-11-11 --- not a review} (Claude Fable~5.2; unreviewed): the
+  poset bridge and three boundary concepts outside the fragment
+  (\code{formal/PosetBridge.lean}), and corrections --- a cited theorem on
+  two-variable logic had been withdrawn, and the tableau used in item~4 is
+  incomplete (\code{ERRATA.md}).
 \end{enumerate}
 
 \paragraph{What stayed constant across all three routes.} Worth one
@@ -1052,8 +1117,9 @@ Free amalgamation; all-cross-$\PO$ safety; non-uniform cross-policies
 \code{wp83})\\[0.3em]
 Lift-lemma stress-test incl.\ multi-path $\PO$ forcing; fragment
 boundary & Machine-checked empirically (\code{wp86})\\[0.3em]
-Two independent reasoners agree on the fragment (244 concepts) &
-Machine-checked empirically (\code{wp87})\\[0.3em]
+Two separately built reasoners agree on the fragment (244 concepts) &
+Machine-checked empirically (\code{wp87}); evidence only --- neither
+reasoner is a decision procedure (\code{ERRATA.md})\\[0.3em]
 \textbf{Fragment decidability itself}, by a \emph{third} route (a finite
 control graph of signatures, a monotone elimination to a greatest fixed
 point, and a fresh-occurrence unfolding) --- on raw input and under
@@ -1061,7 +1127,8 @@ concrete set semantics & \textbf{Certified} (2026-08-29,
 \code{POFreeLift.lean}: \code{decidableFSat}, \code{decidableSat\_cone},
 \code{decidableSetSat}; fragment membership the only hypothesis, zero
 sorries). Cold-reviewed three times without a counterexample, and audited
-at source level by a fourth review (2026-09-14) that found no defect.
+at source level by a fourth review (2026-09-09) that found no defect; a
+fifth (Astra~6, 2026-10-07) found no gap.
 Decidable, \emph{not} runnable: the signature space is doubly
 exponential\\[0.3em]
 PO-erasure extension: the fragment $\mathcal D$ (no $\exists\PP$,
@@ -1074,6 +1141,30 @@ assembly --- Routes 1 and 2) & \textbf{Theorem-level} --- argued, twice,
 independently; \emph{not} end-to-end formalized. The certified route above
 is a \emph{different} proof of the same theorem and does not use
 $K(C_0)$\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent Added 2026-11-11, from one session and not yet reviewed; all three
+concern what lies outside the fragment:
+
+\begin{center}
+\small
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.52\textwidth}>{\raggedright\arraybackslash}p{0.42\textwidth}@{}}
+\toprule
+\textbf{Claim} & \textbf{Status}\\
+\midrule
+What lies just outside: the incomparability fragment has the satisfiability
+problem of two-variable logic over strict partial orders with unary predicates
+& Lean-checked (2026-11-11, \code{formal/PosetBridge.lean}:
+\code{poset\_bridge}, \code{patsys\_to\_rcc5}) except one textbook normal-form
+step; \emph{unreviewed}\\[0.3em]
+Two slices containing $\forall\PO$ decided through that bridge & Theorem-level,
+by import of published theorems; not formalized, cited proofs not checked\\[0.3em]
+$K_2$, $C_{\mathrm{cyc}}$ and an infinity axiom without
+$\exists\PP$/$\exists\PPI$ & Lean-checked (\code{k2\_sat}, \code{ccyc\_unsat},
+\code{ccycErased\_sat}, \code{spiralConcept\_infinite}); \emph{unreviewed};
+all outside the fragment\\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -1099,14 +1190,19 @@ coherence (cycling a type-equal chain segment into a kernel is
 legitimate), witness selection (late picking), and the syntactic
 $\forall\PO$-vacuity (\code{pofree\_cl\_all}: no $\forall\PO$ ever
 appears in the fragment's closure --- the escape valve,
-kernel-checked). Not formalized on \emph{this} route: the assembly construction gluing these
-into an accepted code, and the $K(C_0)$ counting/enumeration.
+kernel-checked). Rounds E4--E6 (2026-08-06) then completed this route for
+three of the four quadrants --- horizontal, ascending vertical and descending
+vertical, with the lemma \code{rr\_covers} as the keystone --- and for one
+mixed witness (the \code{decidableSat\_...} family in the Lean file). Not completed on
+\emph{this} route: the general mixed extraction, whose node-reuse architecture
+cold attack refuted (\S\ref{sec:ledger}, item~5), and the $K(C_0)$ counting.
 
 That is no longer the last word on the theorem, though it remains the last
 word on \emph{this} argument. The fragment was carried to a machine-certified
 decision procedure in August 2026 by a third route (ledger
 \S\ref{sec:ledger}, item~5) which does not use $K(C_0)$ at all, and which has
-since been through three independent cold reviews without a counterexample.
+since been through three independent cold reviews, a source-level audit and a
+fifth review, none of which found a counterexample.
 So the honest labels differ: the \textbf{theorem} is
 \textbf{machine-certified}; the \textbf{two arguments in this explainer}
 remain \textbf{strongly supported, not formalized end-to-end}; and the
@@ -1141,16 +1237,18 @@ tracking only order/disjointness obligations (whose propagation
 calculus provably never manufactures a $\forall\PO$ obligation)
 terminates by ordinary blocking, discharging $\exists\PO$ by
 always-safe free amalgamation. Two argument shapes and three independent
-arrivals, and then a fourth shape --- a finite control graph of signatures
+arrivals, and then a third shape --- a finite control graph of signatures
 with a fresh-occurrence unfolding --- which is the one that carried the
 theorem all the way into the kernel: since 2026-08-29 the fragment has a
 machine-certified \emph{decision procedure}, on raw input and under concrete
 set semantics, with fragment membership its only hypothesis, and three
-independent cold reviews of it found no counterexample. On the fragment the
-live-width bound that the full logic's certificate route needs (F6) is a
-theorem rather than a conjecture --- though the certified procedure turns out
-not to need it --- and the fragment's boundary, one constructor wide, is drawn
-by the composition table itself.
+independent cold reviews, a source-level audit and a fifth review found no
+counterexample. On the fragment the live-width bound that the full logic's
+certificate route needs (F6) is argued at theorem level rather than
+conjectured --- though the certified procedure turns out not to need it ---
+and the fragment's boundary, one constructor wide, is drawn by the composition
+table itself: the boundary of this argument, not of decidability
+(\S\ref{sec:boundary}).
 
 \bigskip
 \begin{center}
@@ -1162,8 +1260,10 @@ as a focused paper), \code{WHY\_ITS\_HARD.md} (the full problem, non-technical),
 \code{papers/rcc5\_local\_amalgamation\_theory.tex} (Route~2's local
 algebra), \code{papers/overview\_arxiv.tex}, \S``The win'' (the
 calibrated summary), \code{formal/POFreeLift.lean},
-\code{formal/RCC5NormalForm.lean} (the certified parts). The Markdown
-original of this note is \code{papers/WHY\_PO\_FREE\_IS\_DECIDABLE.md}.
+\code{formal/RCC5NormalForm.lean} (the certified parts),
+\code{formal/PosetBridge.lean} and \code{papers/poset\_bridge/README.md} (what
+lies just outside the fragment), and \code{ERRATA.md} (corrections). A short
+Markdown pointer to this note is \code{papers/WHY\_PO\_FREE\_IS\_DECIDABLE.md}.
 Where this document and the formal artifacts disagree, the formal
 artifacts win.}}
 \end{center}

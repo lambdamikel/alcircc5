@@ -5,7 +5,8 @@ wp87_po_free_end_to_end.py  (2026-07-18)
 End-to-end empirical validation of DECIDABILITY of the ∀PO-free fragment of
 ALCI_RCC5 (step (a) toward a rigorous proof, before Lean).  Complements
 wp86, which checked the two-tier lift lemma (soundness crux).  Here we test
-the whole claim from the outside: two INDEPENDENT decision procedures --
+the whole claim from the outside: two separately built REASONERS (neither is a
+decision procedure; see ERRATA.md, E2 and E3) --
 the cover-tree tableau and the quasimodel/type-elimination reasoner -- are
 run on a large, diverse batch of ∀PO-free concepts.  If the fragment is
 decidable and both procedures are correct on it, they must (a) always
@@ -270,7 +271,7 @@ def main():
     # PASS criterion is CORRECTNESS (agreement), not speed:
     ok = (cur_fail == 0 and mism == 0 and term_ok)
     if ok:
-        print("ALL PASS (correctness) -- two independent decision procedures agree")
+        print("ALL PASS (correctness) -- two separately built reasoners agree")
         print(f"on every ∀PO-free concept decided ({agree} random + all curated,")
         print("0 mismatches); slow cases terminate on retry (slow, not looping).")
         print("Cost grows as the double-exponential K(C0) bound predicts -- expected,")

@@ -1,4 +1,8 @@
-# Verification of GPT-5.5's Repaired Split-Forest Decidability Proof
+# Verification probes
+
+*This file began as the verification of GPT-5.5's repaired split-forest
+decidability proof (May 2026) and has grown by accretion; its original title
+was "Verification of GPT-5.5's Repaired Split-Forest Decidability Proof".*
 
 This directory contains computational cross-checks of the finite combinatorial content of GPT-5.5's [repaired split-forest decidability proof](../papers/gpt5.5_round2/repaired_split_forest_no_automata_proof.pdf) (May 2026, 16 pages, no-automata route).
 
@@ -6,16 +10,27 @@ The work-package mapping follows GPT-5.5's [verification recommendations documen
 
 **Status: All four scripts PASS. No counterexample found.** *(July 2026: three further scripts WP14–WP16 target the round-12 patchwork-bag proof — see below; all PASS, where WP15's PASS deliberately confirms a defect in round-12's Truth Lemma as written, plus its repair map.)*
 
-The Lean targets L1–L7 from GPT-5.5's verification recommendations are not yet attempted.
+The Lean targets L1–L7 from GPT-5.5's verification recommendations were not attempted in that form; the Lean work took a different shape ([`../LEAN.md`](../LEAN.md)).
 
-> **Scope of this file (note, 2026-09-14).** This README documents the early work
+> **Scope of this file (note, 2026-11-11).** This README documents the early work
 > packages and their round-by-round companions. It is not a complete catalogue: the
-> probe set now runs to 94 scripts (`python/wp1…wp135`), and the later ones — the
-> F6/W2′ attacks, the regular-cover pivot, the fragment certification campaign and
-> the cone-scheme probes `wp133`–`wp135` — are described in their docstrings, in
+> probe set now runs to 98 scripts (`python/wp7…wp139`, not contiguous; WP1–WP6 are
+> the four unnumbered scripts below), and the later ones — the F6/W2′ attacks, the
+> regular-cover pivot, the fragment certification campaign, the cone-scheme probes
+> `wp133`–`wp135` and the Astra 6 audit probe `wp136` — are described in their
+> docstrings, in
 > [`../CLAUDE.md`](../CLAUDE.md), and in [`../ASSEMBLY_DESIGN.md`](../ASSEMBLY_DESIGN.md).
 > The Lean work has long since superseded the L1–L7 list above; see
-> [`../LEAN.md`](../LEAN.md).
+> [`../LEAN.md`](../LEAN.md). The three probes of 2026-11-11 (`wp137`–`wp139`)
+> have entries at the end.
+
+> **Reading agreement with the cover-tree tableau (2026-11-11).** WP11, WP13, WP16
+> and WP26 part C use `src/cover_tree_tableau.py` as a reference verdict. The
+> tableau is incomplete ([`../ERRATA.md`](../ERRATA.md), E2): it can answer UNSAT
+> on a satisfiable concept. Agreement on SAT verdicts is unaffected; agreement on
+> UNSAT verdicts is evidence only where a second source agrees. (`wp87`, inside
+> the ∀PO-free fragment, is unaffected in substance.) For a verdict that has to
+> be trusted, use `src/midelora_tableau.py`.
 
 ## Layout
 
@@ -227,7 +242,7 @@ Companion to [`papers/midelora_calculus/`](../papers/midelora_calculus/README.md
 tableau after the ALCI_RA_JEPD prover of M. Wessel's MiDeLoRa: every two nodes
 are related by one base relation, the composition table is checked on every
 triangle, the ∃-rule may reuse an existing successor, and there is no blocking.
-The note proves it sound and complete for strong EQ; it does not terminate on
+The note gives a paper proof (unreviewed) that it is sound and complete for strong EQ; it does not terminate on
 satisfiable concepts whose models are all infinite.
 
 The probe is the evidence for the implementation. A: the composition table it
@@ -255,6 +270,9 @@ python3 wp14_patchwork_property_check.py > ../reports/wp14_patchwork_property_ch
 python3 wp15_shadow_row_realizability.py > ../reports/wp15_shadow_row_realizability.txt
 python3 -u wp16_round12_bag_acceptance.py > ../reports/wp16_round12_bag_acceptance.txt
 python3 wp17_round13_discipline_check.py > ../reports/wp17_round13_discipline_check.txt
+python3 wp137_poset_bridge_probe.py > ../reports/wp137_poset_bridge_probe.txt             # ~25 s; 27/27, or 26/26 + one [SKIP] without python-sat
+python3 wp138_tableau_nested_witnesses.py > ../reports/wp138_tableau_nested_witnesses.txt # 1-4 min; 14/14
+python3 wp139_midelora_reference.py > ../reports/wp139_midelora_reference.txt             # 3-5 min; 33/33
 ```
 
 Each script exits with code `0` on PASS and `1` on any mismatch / counterexample. The four round-2-era reports all end with `VERDICT: PASS`; the four July-2026 reports (WP14–WP17) all end with their `OVERALL: PASS` lines (for WP15, PASS means *the defect and its repair map are confirmed* — it is an attack harness).

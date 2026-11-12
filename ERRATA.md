@@ -33,6 +33,7 @@ J. Logic Comput. 2026).
 | place | state |
 |---|---|
 | `papers/overview_arxiv.tex`, conclusion | corrected |
+| `papers/talk_ALCIRCC5.tex`, the first-order-fragments slide ("FO² + 1 transitive rel.: decidable") | corrected in the re-sync of the same day; the first pass had missed it |
 | `papers/pofree_fragment_arxiv.tex`, related work and discussion | corrected |
 | `CONVERSATION.md`, closing entry of 2026-09-14 | history; corrected by the 2026-11-11 entry |
 | `papers/gpt-5.6-latest-overview-paper-review-and-recommendation/` (where the sentence came from) | archived unmodified; erratum in that folder's README |
@@ -60,7 +61,8 @@ K2 = ∃PO.(A ⊓ ∀PO.¬B ⊓ ∀DR.¬B) ⊓ ∃PO.(B ⊓ ¬A)
 is satisfiable (`r = {1,3}`, `a = {1,4}`, `b = {1,4,5}`; `k2_sat`, Lean-checked)
 and the tableau answers **UNSAT**. Two `DR`/`PO` witnesses of one node need not
 be siblings of each other; they can be nested, and `K2` forces that. The
-tableau is **incomplete**. No wrong SAT answer is known.
+tableau is **incomplete**. No wrong SAT answer is known for the code as
+repaired on 18 April 2026 (see E3 for what was shown before that).
 
 **Where it stood.**
 
@@ -72,6 +74,7 @@ tableau is **incomplete**. No wrong SAT answer is known.
 | `papers/cover_tree_tableau_ALCIRCC5.tex` (abstract's "key insight"; the sibling check) | erratum box on page 1 and a note at the step |
 | `papers/why_po_free_decidable.tex` ("two independent decision procedures") | corrected to "reasoners" |
 | `approaches/Tableaux/Overview.md` | corrected |
+| `approaches/FiniteModel_TwoTier/Overview.md` and `papers/overview_arxiv.tex` §"finite models" ("two independent decision procedures"); the docstring of `wp87` | corrected in the re-sync of the same day; the first pass had missed them |
 | `src/cover_tree_tableau.py` | **default not changed**; the defect is documented in its header. An experimental repair is behind `check_satisfiability(C, nested_witnesses=True)` (`wp138`) |
 | `CLAUDE.md`, status paragraph of 2026-09-14 | history; superseded by the 2026-11-11 paragraph |
 | the PDFs inside tag `release-2026-09-14` | **not corrected** — the tag predates this |
@@ -97,6 +100,63 @@ tableau is **incomplete**. No wrong SAT answer is known.
   suite; that is evidence, not a proof. A terminating procedure that is sound
   and complete for the full logic would decide the open problem of E1, so no
   patch makes the tableau a decision procedure.
+
+### E3. "Until November 2026 no verdict of the tableau had been shown wrong" — false; wrong SAT answers were shown in April 2026
+
+*Found the same day, while the documents were being re-read after E2. It
+corrects E2's own correction.*
+
+**What we said.** From 2026-09-14: that no verdict the cover-tree tableau has
+returned, "before or after the fix", has ever been shown wrong, and that its
+April gap was latent, found by code review, and "changed no verdict". On
+2026-11-11, in correcting E2: that "until November 2026 no verdict of the
+tableau had been shown wrong", and that its SAT answers "remain unrefuted".
+
+**What is true.** There were two events in April 2026, and those sentences
+describe only the first.
+
+* **11 April.** The cross-interaction check was generalized from singleton
+  compositions to all compositions. It changed none of the 911 verdicts. This
+  is the "latent gap".
+* **18 April.** A review by Claude Opus 4.7
+  ([`review_paper/`](review_paper/review_cover_tree_tableau.pdf)) showed that
+  the tableau as then committed answered **SAT on twelve unsatisfiable
+  concepts**: `∃R₁.∃R₂.A ⊓ ⨅ { ∀R.¬A : R ∈ comp(R₁,R₂) }` for every pair with
+  `R₂ ≠ inv(R₁)`, the simplest being `∃PP.∃PP.A ⊓ ∀PP.¬A`. It was repaired the
+  same day (the role-path check CT5), the reviewer attacked the repair and
+  withdrew the claim for the repaired code. The 911-case suite showed zero
+  mismatches before and after.
+
+So the tableau has been shown wrong in **both** directions: wrong SAT answers in
+April (repaired), a wrong UNSAT answer in November (`K2`; not repaired by
+default). The accurate sentence is: *since the repair of 18 April 2026 no wrong
+SAT answer is known.*
+
+The April review was recorded when it happened — in `CONVERSATION.md`
+(18 April), in `OUTDATED.md`, and in the tableau paper itself (§3.6). The
+September sentence was written from the 11 April entry alone, and the November
+correction repeated it.
+
+**Where it stood.**
+
+| place | state |
+|---|---|
+| `papers/overview_arxiv.tex` (§ reasoners; status section; conclusion; the record of errors in § agentic) | corrected |
+| `papers/talk_ALCIRCC5.tex` ("fixed without changing a verdict") | corrected |
+| `papers/why_po_free_decidable.tex` (the cross-validation paragraph) | corrected |
+| `README.md` (reasoner section; status entry of 2026-11-11) | corrected |
+| `ERRATA.md`, E2 ("No wrong SAT answer is known") | qualified in place |
+| `papers/cover_tree_tableau_ALCIRCC5.tex`, erratum box | qualified |
+| `approaches/Tableaux/Overview.md`; `papers/poset_bridge/README.md` §6 | corrected |
+| `README.md` (status entry of 2026-09-14); `CLAUDE.md` (paragraph of 2026-09-14); `CONVERSATION.md` | history; superseded by this entry |
+| the PDFs inside tag `release-2026-09-14` | **not corrected** — the tag predates this |
+
+**What it changes.** No theorem. It changes how much the tableau's agreement
+with anything is worth: twice now a suite with zero mismatches has missed a
+defect of the tableau, once an unsoundness and once an incompleteness. For a
+verdict that has to be trusted, use the reference reasoner
+(`src/midelora_tableau.py`), whose SAT answers come with a checkable model and
+whose UNSAT answers rest on a completeness proof — a paper proof, unreviewed.
 
 ### Checked and found not to need correction
 

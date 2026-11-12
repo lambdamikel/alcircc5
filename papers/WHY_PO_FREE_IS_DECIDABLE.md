@@ -1,7 +1,7 @@
 # Why the ∀PO-Free Fragment Is Decidable — A Guide for the Tableau-Minded
 
 > **📄 The full explainer is the typeset PDF:
-> [`why_po_free_decidable.pdf`](why_po_free_decidable.pdf)** (~18 pp) ·
+> [`why_po_free_decidable.pdf`](why_po_free_decidable.pdf)** (20 pp) ·
 > [LaTeX source](why_po_free_decidable.tex). The certified result itself is
 > written up as a focused paper:
 > [`pofree_fragment_arxiv.pdf`](pofree_fragment_arxiv.pdf).
@@ -34,16 +34,17 @@ vocabulary, whereas a single `∀PO` sends witnesses "wandering" in a way that
 provably defeats the two-tier route's finite certificate. **Ban `∀PO` and both
 argued proof routes close** — the two-tier quotient (chain-and-phase) and the
 ordered-disjoint normal form (structural). On the fragment, the live-width
-bound that the full logic's certificate route needs (F6) is a *theorem* rather
-than a conjecture — though the procedure that was finally certified needs no
-width bound at all — and the boundary is one constructor wide. The PDF develops
+bound that the full logic's certificate route needs (F6) is *argued at theorem
+level* rather than conjectured — though the procedure that was finally
+certified needs no width bound at all — and the boundary of this argument is
+one constructor wide. The PDF develops
 all of this.
 
-## Current status (2026-10-08)
+## Current status (2026-11-11)
 
 **Certified decidable across all four quadrants**, including the mixing one
 (∃PO + ∃PP) that was open when this note was first written. Three capstones in
-Lean 4 ([`formal/POFreeLift.lean`](../formal/POFreeLift.lean), ~45,400 lines,
+Lean 4 ([`formal/POFreeLift.lean`](../formal/POFreeLift.lean), 46,032 lines,
 **zero sorries**, axioms `propext`/`Classical.choice`/`Quot.sound`), with
 fragment membership the **only** hypothesis in each:
 
@@ -72,8 +73,9 @@ completed, and cold attack refuted the architecture it needed.
 
 **Three independent cold reviews** (2026-08-29) attacked the trusted base, the
 completeness direction and the soundness direction. None found a counterexample
-or a defect in the fragment result, and a fourth, source-level review
-(2026-09-09) found no defect in the Lean. The one remaining caveat is
+or a defect in the fragment result, a fourth, source-level review
+(2026-09-09) found no defect in the Lean, and a fifth (Astra 6, 2026-10-07)
+found no gap. The one remaining caveat is
 complexity, not correctness: the procedure is **decidable but not runnable** —
 the signature space is doubly exponential.
 
@@ -91,8 +93,26 @@ are also decided, provided `∃PP`, `∃PO` and `∀DR` are absent, by erasing e
 `∀PO.D` to `⊤` and running the certified procedure. Inside that fragment the
 `∀PO` restrictions are provably vacuous (the witness forest has *no* PO pair
 at all), so this is a calibrated extension, not a dent in the boundary story:
-each excluded constructor is necessary (`wp136`), and the full-logic
-obstruction is untouched.
+each exclusion is necessary for the erasure argument (`wp136`), and the
+full-logic obstruction is untouched. In a second slice, decided by import
+(below), `∀PO` is not vacuous.
+
+**Just outside the fragment (2026-11-11; unreviewed).** One further session
+left the certified results untouched and changed what is known next to them.
+The concepts that use `∃DR` only inside `∃PO.C ⊔ ∃DR.C` and `∀PO` only inside
+`∀PO.C ⊓ ∀DR.C` have the same satisfiability problem as two-variable logic
+over strict partial orders with unary predicates (`poset_bridge`,
+`patsys_to_rcc5` in [`formal/PosetBridge.lean`](../formal/PosetBridge.lean);
+one textbook normal-form step is not formalized). General satisfiability of
+that logic is open, so the full logic contains an open problem of two-variable
+logic; no reduction the other way is known. Through that bridge two slices
+containing `∀PO` are decided by published theorems, not by this project and
+not in Lean, and in one of them a `∀PO` conjunct can change the answer. A
+Lean-checked concept with no `∃PP` and no `∃PPI` has only infinite models. The
+cover-tree tableau is incomplete (it answers UNSAT on a satisfiable concept
+that contains `∀PO`), and a cited theorem on two-variable logic had been
+withdrawn. See [`ERRATA.md`](../ERRATA.md) and
+[`poset_bridge/README.md`](poset_bridge/README.md).
 
 *Full-logic* decidability stays **open**.
 
@@ -110,7 +130,8 @@ is the PDF's "What is certified…" section; the step-by-step provenance is
    PO breaks it
 5. **Route 2** — the ordered-disjoint normal form (structural), and why its
    tableau terminates
-6. Why the boundary is exactly `∀PO`-freeness — not "horizontal vs. vertical"
+6. Why this argument stops exactly at `∀PO`-freeness — not "horizontal vs.
+   vertical" — and what is known beyond it
 7. The proof ledger, the per-claim status table, and a one-paragraph summary
 
 ---
@@ -118,5 +139,8 @@ is the PDF's "What is certified…" section; the step-by-step provenance is
 *Companions:* [`WHY_ITS_HARD.md`](../WHY_ITS_HARD.md) (the
 full problem, non-technical) ·
 [`two_tier_quotient_ALCIRCC5.tex`](two_tier_quotient_ALCIRCC5.tex) (Route 1 in
-full) · [`overview_arxiv.pdf`](overview_arxiv.pdf) (the overview paper). Where
+full) · [`overview_arxiv.pdf`](overview_arxiv.pdf) (the overview paper) ·
+[`ERRATA.md`](../ERRATA.md) (corrections) ·
+[`poset_bridge/README.md`](poset_bridge/README.md) (what lies just outside the
+fragment). Where
 this pointer and the formal artifacts disagree, the formal artifacts win.

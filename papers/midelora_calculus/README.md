@@ -279,6 +279,6 @@ nodes, which is MiDeLoRa as implemented and is outside the theorem above.
 * M. Wessel. Qualitative spatial reasoning with the ALCI_RCC family — first
   results and unanswered questions. Memo FBI-HH-M-324/03, 2003
   (`papers/report7.pdf`): the axiomatization (§5), and the remark that the
-  prototype's calculus "can be shown to be sound and complete" (§4.3.1).
+  prototype's calculus "can be shown to be sound and complete" (end of §3).
 * C. Lutz, F. Wolter. Modal logics of topological relations. *LMCS* 2(2:5), 2006.
   Theorem 28.

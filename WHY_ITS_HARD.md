@@ -5,7 +5,7 @@ symbols, no proofs — just the ideas, and an honest account of why the
 central question has stayed open across dozens of rounds. If you have
 never seen a description logic, start here.*
 
-*Revised September 2026. What this guide says about "the one open
+*Revised November 2026. What this guide says about "the one open
 question" applies to the approach this project took, not to every possible
 approach; where it used to say more, it has been corrected. One piece of the
 problem is settled outright (§11), and has its own paper:
@@ -119,8 +119,10 @@ bookkeeping device — "continue like this" — not a claim that the ladder
 actually closes into a ring. Get that wrong and everything collapses;
 get it right and infinite ladders become finite blueprints.
 
-**Bottom line: the vertical axis is solved.** Loops tame it. If nesting
-were the only thing going on, this would be an easy, well-known result.
+**Bottom line: ladders are tamed.** Loops handle them. That does not make
+every description that asks only for containers and parts easy — statements
+about overlap can still force such witnesses into an impossible circle (§11) —
+but the ladder itself is not where the problem lives.
 
 ---
 
@@ -289,9 +291,21 @@ The exact same pigeonhole applies *sideways*. Try to force an endless
 side-by-side chain of blobs, and two of them eventually carry the same
 description with compatible surroundings — at which point nothing stops you
 from declaring them *the same blob* and closing the chain into a small loop.
-Side-by-side chains block just like nested ones. So the language cannot force
+So the language cannot force
 a runaway crowd merely by *asking* for more and more blobs; the crowd folds
 back on itself.
+
+**A correction (November 2026).** An earlier version said side-by-side chains
+fold "just like nested ones". Not every chain does. There is a description
+with five colours — each region asks for a neighbour of the next colour and
+one of the previous colour that it overlaps or is separate from, and regions
+two colours apart are forbidden to overlap or to be separate — that is
+consistent, asks for no container and no part, and is satisfied only by
+infinite arrangements (machine-checked). Regions two steps apart are forced
+to be nested, the nesting can only run one way, and so the chain never
+returns. It is not a crowd: at most two of its regions are ever side by side.
+So it leaves the width question where it was. What it shows is that infinity
+can be forced by *forbidding* relations, not only by asking for containers.
 
 This last point is no longer just a hunch. An outside reviewer of this work
 (itself an AI, from a different lab) checked it *exhaustively*: following any
@@ -299,13 +313,15 @@ chain of "how this relates to that relates to the next," and asking when such
 a chain can ever loop back on itself, one finds that **every loop is a nesting
 loop** — there is no purely *sideways* loop that resists folding. Put plainly:
 a sideways chain always either folds into a small cycle, or it stops being
-sideways and turns into a nesting chain (which the loop trick already tames).
+sideways and turns into a nesting chain (for ladders that were asked for, the
+loop trick tames this; for a ladder forced sideways, as in the correction
+above, whether our blueprints can represent it has not been tested).
 That closes off a whole family of "maybe the crowd can grow this way" attempts
 in one stroke. It does *not* settle the real question — that is about *width*,
 not chains — but it is a clean, checkable fact that hardens exactly this leg of
 the argument.
 
-**What it would take.** To stop the fold, every blob in the crowd would need
+**What it would take.** To stop a *crowd* from folding, every blob in it would need
 a permanent, *unique address* — a fixed coordinate — so that no two could
 ever be quietly identified. That's rigid coordination: a spatial grid, a
 ruler, a coordinate system. And here is the wall: **the five relations look
@@ -318,6 +334,10 @@ side-by-side axis no single step forces a value. Several constraints
 But such a pin is a one-off arrangement, not a reusable address, and nobody
 has found a way to turn the one into the other. That is the lever the
 language seems to lack.
+
+One more pin exists, and it points the other way: forbid both side-by-side
+relations between two kinds of region, and any two such regions *must* be
+nested. That pins nesting, not a side-by-side address.
 
 **So the two questions look like one.** "Build a description that forces a
 runaway crowd" and "prove no description can" appear to be the single
@@ -343,6 +363,15 @@ looseness would close this project's route to decidability; exploiting it
 would be a first step towards undecidability, which would still need an
 actual grid. It is a shared obstacle, not a proof that settling one side
 settles the other.
+
+**A second reason, found in November 2026.** Part of this language — the
+descriptions that never tell "overlapping" from "separate", only "nested"
+from "not nested" — is, exactly, a logic studied elsewhere for over a decade:
+statements with two variables about one ordering. Whether that logic is
+decidable is itself open; a 2013 proof was withdrawn by its authors in 2018.
+So our problem contains theirs: a procedure for ours would decide theirs, and
+if theirs is undecidable, so is ours. Nothing is known in the other
+direction. (This result is machine-checked and has not yet been reviewed.)
 
 We did not resolve it — nobody has in twenty years. But the attempt turned a
 vague "the horizontal axis is hard" into a crisp target, approachable from
@@ -408,7 +437,7 @@ stating plainly.
   for an overlapping or containing witness and never universally constrain
   disjoint regions --- because then the overlap statements are provably
   toothless and can be erased.
-  That is not a side result; it is the sharpest statement available of where
+  That is not a side result; it is one sharp statement of where
   the difficulty of the full problem lives, and the reason is worth one
   sentence. Whenever the composition rules leave a pair's relation open, you
   can always settle it as "partially overlapping" — *unless some formula can
@@ -423,6 +452,16 @@ stating plainly.
   everything else fall out. Whatever makes the full problem hard, it is not
   nesting, disjointness or size on their own — it needs that one universal.
 
+- **A second address for the difficulty (November 2026; not yet reviewed).**
+  The part of the language that cannot tell overlap from disjointness is, by a
+  machine-checked translation, the two-variable logic of a single ordering, in
+  the version that speaks only of properties of single regions. That logic's
+  decidability is open, so the full problem contains a known open problem. Two
+  corners are decided by theorems from that literature — when only containers
+  and parts are asked for, and when only finite arrangements are wanted. Those
+  two are imported, not machine-checked here. They include the first decided
+  case in which an "everything I overlap" statement changes the answer.
+
 - **A machine-checked core.** The most recent phase rebuilt the sound
   half of the argument inside a **proof assistant** (Lean) — software
   that mechanically checks every logical step and refuses to accept a gap.
@@ -433,7 +472,8 @@ stating plainly.
   is a genuine RCC5 world and that it models the logic. For the fragment
   just described the machine now contains the *whole* result — a decision procedure,
   not just a sound half — and it has been attacked three times by independent
-  cold reviewers without a counterexample. What it does **not** contain, for
+  cold reviewers, and audited twice more (September and October 2026), without
+  a counterexample. What it does **not** contain, for
   the full problem, is F6, bounded width, or the steps that would lead from
   it to a decision procedure. They appear only as the *conditions* of
   conditional theorems, deliberately left unproven, because proving them is
@@ -447,7 +487,9 @@ stating plainly.
   the approach is settled or mechanically checked. A future solver on this
   route doesn't have to understand the whole edifice; they have to crack one
   well-posed statement about horizontal crowds. A different route might
-  avoid it altogether.
+  avoid it altogether. Since November 2026 there is also a route-independent
+  landmark: any decision procedure for the full problem must decide the
+  two-variable ordering logic described above.
 
 That last point is the real deliverable if the decidability question
 itself never resolves: **the difficulty of this approach has been located
@@ -469,9 +511,11 @@ relationships that cost nothing — but the clean argument for it keeps
 failing because it measures the wrong axis: it uses nesting-depth to bound
 crowd-width, and crowds don't add depth. Chasing it from the other side
 revealed why it's so stubborn: a big crowd is easy to *draw* but seems
-impossible to *force*, because side-by-side chains loop back on themselves
-just like nested ones — and stopping the loop would need rigid coordinates
-the five relations seem too loose to pin. So "build a runaway crowd" and
+impossible to *force*, because side-by-side crowds fold back on themselves —
+and stopping the fold would need rigid coordinates the five relations seem
+too loose to pin. (A side-by-side *chain* can be made endless without
+coordinates, by forbidding relations; that produces a hidden ladder, not a
+crowd.) So "build a runaway crowd" and
 "prove none exists" look like one question, and the same looseness is what
 has stopped anyone proving the problem *undecidable* (nobody has pinned a
 computation-grid either). The project machine-checked the parts of its
@@ -479,8 +523,10 @@ approach around that bounded-crowd fact and gathered real evidence that it
 is true. One thing *did* fall:
 remove a single construct — the ability to say "everything I partially
 overlap satisfies this" — and the problem becomes decidable, with a
-machine-checked procedure to prove it, which is the sharpest available
-statement of where the difficulty actually lives. Whether the crowd fact
+machine-checked procedure to prove it, which is one sharp statement of where
+the difficulty actually lives. And part of the language turned out to be a
+known open problem of two-variable logic, so the full question is at least as
+hard as that one. Whether the crowd fact
 holds is the open question for this approach; whether it is the only way to
 the answer, nobody knows.
 
@@ -488,13 +534,17 @@ the answer, nobody knows.
 
 *This document is a companion to the technical write-ups in `papers/` and
 the machine-checked developments in `formal/` — `POFreeLift.lean` (the
-decided fragment, and the normative artifact), `Round19Transport.lean` (the
-full-logic soundness pipeline), and `RCC5NormalForm.lean`. It is deliberately
+decided fragment), `PosetBridge.lean` (the link to two-variable logic,
+importing it), `Round19Transport.lean` (the full-logic soundness pipeline),
+and `RCC5NormalForm.lean`. Corrections to earlier versions are listed in
+[`ERRATA.md`](ERRATA.md). It is deliberately
 informal; where it and the formal artifacts disagree, the formal artifacts
 win.*
 
-*Last revised 2026-09-14, to state the F6 claims as claims about one approach
-(following a cold review of the overview paper) and to correct §9's "overlap
-is never forced". The full problem is still open; §§1–9 are otherwise
+*Last revised 2026-11-11: §9 corrected (sideways chains do not always fold)
+and §11 extended (the link to two-variable logic). Earlier: 2026-10-08 (the
+Astra 6 extension) and 2026-09-14, to state the F6 claims as claims about one
+approach (following a cold review of the overview paper) and to correct §9's
+"overlap is never forced". The full problem is still open; §§1–9 are otherwise
 unchanged by the fragment result, because F6 only matters where the construct
 the fragment removes occurs.*

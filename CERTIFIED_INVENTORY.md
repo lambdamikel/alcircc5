@@ -4,14 +4,18 @@
 >
 > This inventory predates the cone-scheme route and does **not** list its
 > declarations. Figures below are from 2026-08-20 (1,036 top-level
-> declarations); the file now has **2,362**, still 0 sorries and 0 warnings.
+> declarations); the file now has **2,404**, still 0 sorries and 0 warnings.
 >
 > **The capstones it is missing**, all in `formal/POFreeLift.lean`:
 > `decidableFSat` (raw input, with `nnfP_correct`), `decidableSat_cone` (NNF),
 > `decidableSetSat` (concrete sets), `satisfiable_iff_set` (abstract $=$
 > concrete, no fragment hypothesis), `coneScheme_sound`, `coneScheme_complete`,
 > `coneScheme_unsat_full`, and the control layer `sigStatic` / `compatB` /
-> `pruneSig` / `gfpIter`. Provenance: `ASSEMBLY_DESIGN.md` §§267–297.
+> `pruneSig` / `gfpIter`. Provenance: `ASSEMBLY_DESIGN.md` §§267–297. Since
+> 2026-10-08 also: `erase_equisat`, `decidableSat_dfrag`,
+> `decidableSetSat_dfrag` (§299), `odMax`, `odMax_largest`, `pdown_*` (§300). A
+> second file, `formal/PosetBridge.lean` (2026-11-11), imports this one; its
+> declarations are not listed here.
 >
 > Everything listed below still exists and is still proved — the risk this file
 > guards against (re-deriving what exists) is unchanged for those entries. The

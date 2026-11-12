@@ -309,9 +309,12 @@ Consequences for the text:
 * "no verdict of the cover-tree tableau has ever been shown wrong" is false as
   of this note (README ×2, overview ×5, slides ×1, `CLAUDE.md` ×1; corrected, or
   in `CLAUDE.md` superseded by a new head paragraph, in the same change set).
-  The accurate statement: its SAT answers are still unrefuted; it is
-  **incomplete** on concepts whose horizontal witnesses must be nested, with
-  `K2` as the witness.
+  The accurate statement: since the repair of 18 April 2026 no wrong SAT answer
+  is known; it is **incomplete** on concepts whose horizontal witnesses must be
+  nested, with `K2` as the witness. *(Corrected the same day, `ERRATA.md` E3:
+  the sentence was false before this note too. In April 2026 a review showed
+  the tableau as then committed accepting twelve unsatisfiable concepts; it
+  was repaired at once.)*
 * The wrong direction is UNSAT, and subsumption is tested as unsatisfiability.
   So the tableau's subsumption verdicts are evidence only where something
   independent agrees. The GIS taxonomy still matches the 2003 result edge for
