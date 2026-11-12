@@ -9026,3 +9026,13 @@ which a `∀PO` conjunct changes the answer, and it is twenty-three years old.
 "the first decided slice in which `∀PO` can change the answer" (today, of the
 imported slice) were both wrong as stated. 𝒟 is the first *certified* one; the
 imported slice is the first that keeps the order visible. `ERRATA.md`, E5.
+
+## 2026-11-12 — the letter sent
+
+Michael sent a short cover email to the authors of the two-variable papers,
+linking to the open letter. It says who he is, that one fragment of ALCI_RCC5
+is decided with a Lean-checked procedure while the full problem is open, that
+a different fragment has exactly the satisfiability problem of two-variable
+logic over a strict partial order with unary predicates, and that the bridge
+is a few days old and unreviewed. Whether an answer comes is now out of the
+project's hands.
