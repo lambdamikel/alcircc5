@@ -529,7 +529,8 @@ an external theorem, cited\\
 \emph{arguments} and their $K(C_0)$ bound; the W2$'$ refinement; the local
 extension and cross-policy results; the two slices of
 $\mathcal L_{\parallel}$ decided by import through the bridge; soundness and
-completeness, without termination, of the reference tableau & a proof in a
+completeness, without termination, of the reference tableau
+(Theorem~\ref{thm:midelora}) & a proof in a
 named work package or note, often with finite probes\\
 \addlinespace
 \emph{Empirical} & the cover-tree tableau (incomplete: $K_2$); the reference
@@ -1624,7 +1625,7 @@ complete, and it is the first thing one tries here. Without blocking the
 method is not lost, only non-terminating: a tableau that keeps the whole
 complete graph, choosing for every fresh node its relation to every existing
 node, is sound and complete for this logic by a paper proof
-(\S\ref{sec:reasoners}). It answers on every unsatisfiable concept and on
+(Theorem~\ref{thm:midelora}). It answers on every unsatisfiable concept and on
 every concept with a finite model. What is missing is a sound blocking
 condition. Our most refined implementation with blocking is the
 \emph{cover-tree tableau} (\S\ref{sec:reasoners}), which blocks on \emph{exact
@@ -2681,7 +2682,7 @@ hypotheses---checker soundness, refutation soundness, certificate
 completeness, and first-order completeness---carried as fields rather than
 instantiated: the Lean contains no formal first-order proof system. A concrete
 refutation calculus for this logic now exists outside the Lean: the tableau
-without blocking of \S\ref{sec:reasoners}, shown on paper to close on every
+without blocking of \S\ref{ssec:midelora}, shown on paper to close on every
 unsatisfiable concept. It could instantiate the refutation side of the
 combinator once its soundness is formalized; that has not been done. The FO
 transcription it rests on---that the axioms above carve out exactly the
@@ -2998,29 +2999,14 @@ the tableau a decision procedure.
 \paragraph{A reference reasoner without blocking (November 2026;
 unreviewed).} \texttt{src/midelora\_tableau.py} re-implements in Python the
 tableau of Wessel's MiDeLoRa system~\cite{Wessel2008}, with $\EQ$ fixed to
-identity. It works on a complete graph: every two nodes carry exactly one base
-relation, every triangle satisfies the composition table, and an existential
-is served either by an existing successor or by a fresh node whose relation to
-\emph{every} existing node is chosen. It has no blocking. MiDeLoRa as
-implemented treats $\EQ$ between two nodes as an ordinary edge and never
-merges their labels, which is weak $\EQ$; under the strong $\EQ$ of this paper
-its \textsc{unsat} answers remain correct and a \textsc{sat} answer need not
-be. A paper proof, not formalized apart from its last step (the certified
-Hintikka truth lemma), shows the strong-$\EQ$ calculus sound and complete but
-not terminating: it answers \textsc{unsat} on every unsatisfiable concept,
-\textsc{sat} with a finite model whenever one exists, and does not answer on
-satisfiable concepts all of whose models are
-infinite~\cite{MideloraNote}. The implementation is tested, not verified
-(\texttt{wp139}). It is exact on $1{,}000$ random concepts of a class with
-computable ground truth. It returns a verdict on all $911$ suite concepts, in
-agreement with the tableau, the oracle and the labels. It accepts $K_2$ and
-$C_{\mathrm{sat}}$ and rejects $C_{\mathrm{cyc}}$, $C_{\mathrm{bad}}$ and
-$C_{\mathrm{joint}}$. On the $\PP$-tower and on the spiral concept it stops at
-its node bound without a verdict. This does not bear on decidability: that
-unsatisfiability is recursively enumerable is Lutz and Wolter's Theorem~28,
-and what is added is a concrete calculus for it and a program that runs.
-Termination would need a sound blocking condition, which is the open problem
-of \S\ref{ssec:approach-tableaux}.
+identity: a tableau on a complete graph, with no blocking. By
+Theorem~\ref{thm:midelora} it answers \textsc{unsat} on every unsatisfiable
+concept and \textsc{sat} with a finite model whenever one exists, and does not
+answer on satisfiable concepts all of whose models are infinite. It agrees
+with the tableau and the oracle on all $911$ suite concepts, accepts $K_2$,
+and is exact on $1{,}000$ concepts with computable ground truth. The system,
+the calculus, the proof and the tests are the subject of
+\S\ref{ssec:midelora}.
 
 \begin{figure}[p]
 \centering
@@ -3179,6 +3165,313 @@ branch clashes, the concept is unsatisfiable, and the subsumption holds.
 The two ingredients---\emph{composition-closure} of the interface and
 \emph{universal propagation} along the forced edge---are exactly the
 operations the split-forest procedure performs at every node.
+
+\subsection{MiDeLoRa: a complete-graph tableau, sound and complete without termination}
+\label{ssec:midelora}
+
+\emph{Added November~2026; not reviewed. The proofs of this subsection are
+paper proofs, and only the last step of Lemma~\ref{lem:openbranch} is checked
+in Lean. The statements about MiDeLoRa's source were checked against the
+public repository; the system itself was read, not run.}
+
+The first reasoner for this logic is older than the present project. It is the
+prover Wessel wrote for the $\ALCIRCC{}$ family in his MiDeLoRa system, and it
+turns out to be the right reference point for everything in this section: with
+one adjustment to its treatment of $\EQ$ it is sound and complete, and the one
+thing it lacks is termination.
+
+\paragraph{The system.} MiDeLoRa (``Michael's Description Logic Reasoner
+Framework'') was written between 2003 and 2005 in Common Lisp, as part of the
+doctoral work completed at Hamburg University of
+Technology~\cite{Wessel2008}; its source is public.\footnote{\url{https://github.com/lambdamikel/midelora}.
+File names below are relative to \texttt{src/midelora/} at commit
+\texttt{3218297}.} It is a framework for \emph{building} tableau provers: a
+prover is declared with a macro (\code{define-prover}) as a strategy over
+named rules (\code{defrule}), and the system ships provers for
+$\mathcal{ALCH}$ and its extensions with features, number restrictions,
+inverse and transitive roles, with the usual optimizations---dependency-directed
+backtracking over choice points, semantic branching, model and
+unsatisfiability caching, model merging, and blocking. Two further provers
+work over a \emph{role box}, a composition table on the roles:
+\code{alci-ra-minus}, and \code{alci-ra-jepd} for jointly exhaustive and
+pairwise disjoint base roles. The language \code{alci-rcc} is declared as a
+sub-language of \code{alci-ra-jepd}, so with the RCC5 role box the JEPD prover
+is a prover for $\ALCIRCC5$. Its main loop
+(\texttt{prover/alci-ra-jepd-prover.lisp}) is the one in
+Table~\ref{tab:midelora}, and it uses no blocking: the file never refers to
+the blocking machinery of the other provers.
+
+\begin{table}[t]
+\centering
+\small
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{@{}L{0.37\textwidth}L{0.56\textwidth}@{}}
+\toprule
+\textbf{MiDeLoRa rule} & \textbf{What it does}\\
+\midrule
+\code{abox-completion} (\code{add-missing-edges}, \code{compute-minimal-label})
+& every pair of individuals without an edge receives the disjunction of all
+base relations; the composition table is propagated, with dependency sets\\
+\code{abox-enumeration}, with \code{role-consistent-p} & each disjunction is
+resolved to one base relation; only configurations satisfying the frame
+conditions are kept\\
+\code{deterministic-expansion} & the $\sqcap$-rule and the $\forall$-rule\\
+\code{or-expansion} & the $\sqcup$-rule\\
+\code{some-expansion} (\texttt{prover/some-expansion2.lisp}) & the
+$\exists$-rule; with the switch \code{*reuse-nodes-p*} it first tries each
+existing successor as the witness, then a fresh node\\
+\bottomrule
+\end{tabular}
+\caption{The main loop of MiDeLoRa's JEPD prover. A completion is found when
+no rule applies. The result is a tableau on a \emph{complete graph}: every two
+individuals carry exactly one base relation, and every triangle satisfies the
+composition table.}
+\label{tab:midelora}
+\end{table}
+
+Two things in that source are worth recording here. First, one of the RCC5
+examples in its test file (\texttt{prover/examples.lisp}) states axioms of the
+form $p\sqsubseteq\forall\EQ.p$ for its concept names, which makes individuals
+related by $\EQ$ agree on them: strong $\EQ$ imposed by hand, at the level of
+the TBox. Second, for RCC5 with the axiom $\top\sqsubseteq\forall\PO.\bot$ the
+same file carries
+the comment that the logic then has the tree model property, because ``joins
+must be arranged linearly: between the two only $\PP$, $\PPI$ or $\EQ$
+remains'' (our translation), followed by a Ladner-style tree construction.
+That is the linearization of joins on which the split-forest representation
+rests, for the $\PO$-empty case, some twenty years before the erasure fragment
+of \S\ref{ssec:conescheme} was certified in the same $\PO$-empty geometry. It
+is a statement about models without $\PO$ pairs, not about the
+$\forall\PO$-free fragment of this paper.
+
+\paragraph{The one adjustment: $\EQ$.} In MiDeLoRa the RCC5 role box
+(\texttt{tables/tables2.lisp}) declares \code{eq} as the reflexive role, the
+completion offers
+\code{eq} between any two individuals, and nothing in the prover merges the
+labels of two individuals that are $\EQ$. As implemented, MiDeLoRa therefore
+reasons under \emph{weak} $\EQ$, an equivalence relation. The merge needed for
+strong $\EQ$ exists in the code---the functions \code{eq-collapse} and
+\code{join-nodes} of the file \texttt{jepd-substrate4.lisp} in
+\texttt{thematic-substrate/}---but is called only from a demonstration, not
+from the prover. The two semantics differ on small
+concepts:
+\[
+K_2^{\times}=\exists\PO.(A\sqcap\forall\PO.\neg B\sqcap\forall\DR.\neg B\sqcap
+\forall\PP.\neg B\sqcap\forall\PPI.\neg B)\sqcap\exists\PO.(B\sqcap\neg A)
+\]
+is unsatisfiable under strong $\EQ$ and satisfiable under weak $\EQ$, by two
+witnesses that are $\EQ$ and carry different labels. Every strong model is a
+weak model, so an \textsc{unsat} answer of MiDeLoRa as implemented is correct
+for the semantics of this paper, and a \textsc{sat} answer need not be. Strong
+$\EQ$ is obtained in either of two ways, both already in the code: keep the
+$\EQ$ edge and share the labels of its ends, or never relate two different
+individuals by $\EQ$ and always allow an existential to reuse an existing
+successor. We state and prove the second.
+
+\paragraph{The calculus.} Concepts are in negation normal form over $\DR$,
+$\PO$, $\PP$, $\PPI$; under strong $\EQ$ both $\exists\EQ.C$ and
+$\forall\EQ.C$ are equivalent to $C$ and are replaced by it. $\cl(C_0)$ is the
+set of subconcepts of $C_0$. A \emph{state} is $S=(V,L,\rho)$: a finite set of
+nodes $V$ with a root $x_0$; a label $L(x)\subseteq\cl(C_0)$ for each node; and
+$\rho$, which assigns to every ordered pair of \emph{different} nodes one of
+$\DR,\PO,\PP,\PPI$, such that $\rho(y,x)$ is the converse of $\rho(x,y)$ and
+$\rho(x,z)\in\comp(\rho(x,y),\rho(y,z))$ for all different $x,y,z$. The start
+state is $(\{x_0\},L(x_0)=\{C_0\},\emptyset)$. The deterministic rules are
+applied to a fixed point after every step:
+\begin{itemize}\setlength\itemsep{0pt}
+  \item[$\sqcap$] if $C\sqcap D\in L(x)$, add $C$ and $D$ to $L(x)$;
+  \item[$\forall$] if $\forall R.D\in L(x)$ and $\rho(x,y)=R$, add $D$ to
+    $L(y)$;
+  \item[clash] the state is \emph{closed} if some $L(x)$ contains $\bot$, or
+    $A$ and $\neg A$.
+\end{itemize}
+The nondeterministic rules apply to a state that is not closed:
+\begin{itemize}\setlength\itemsep{0pt}
+  \item[$\sqcup$] if $C\sqcup D\in L(x)$ and neither is in $L(x)$: add $C$, or
+    add $D$;
+  \item[$\exists$] if $\exists R.D\in L(x)$ and no $y$ has $\rho(x,y)=R$ and
+    $D\in L(y)$: either \emph{reuse}---choose a node $y$ with $\rho(x,y)=R$
+    and add $D$ to $L(y)$---or \emph{fresh}---add a new node $y$ with
+    $L(y)=\{D\}$ and $\rho(x,y)=R$, and choose $\rho(y,z)$ for \emph{every}
+    other node $z$ so that $\rho$ is again closed under converse and
+    composition.
+\end{itemize}
+The $\sqcup$-rule has priority over the $\exists$-rule. A state to which no
+rule applies is \emph{saturated}. A \emph{strategy} picks the unsatisfied
+existential to expand; it is \emph{fair} if on every infinite branch every
+existential that stays unsatisfied is eventually expanded. ``Oldest node
+first'' is fair, because labels are subsets of the finite set $\cl(C_0)$, so
+each node raises finitely many existentials in total. The \emph{tableau} of
+$C_0$ is the tree of states under these rules. It is finitely branching: a
+state has at most two successors by the $\sqcup$-rule and at most
+$|V|+4^{|V|}$ by the $\exists$-rule.
+
+Call a state $S$ \emph{realized} in an RCC5 model $I$ by $\pi$ if
+$\pi\colon V\to\Delta^I$ is injective, $\rho(x,y)=\rho^I(\pi x,\pi y)$ for all
+different $x,y$, and every concept in $L(x)$ holds at $\pi(x)$.
+
+\begin{lemma}[A model guides a branch]\label{lem:guides}
+If $S$ is realized by $\pi$, then $S$ is not closed; the deterministic rules
+keep it realized by the same $\pi$; and whenever a nondeterministic rule
+applies to it, one of the alternatives is realized, by an extension of $\pi$.
+\end{lemma}
+
+\begin{proof}
+A clash would put $\bot$, or $A$ and $\neg A$, at one element of $I$. The
+$\sqcap$- and $\forall$-rules add concepts that hold at the image, by the
+semantics and because $\pi$ preserves relations. For $\sqcup$: $C\sqcup D$
+holds at $\pi(x)$, so one disjunct does. For $\exists$: $\exists R.D$ holds at
+$\pi(x)$, so some $w$ with $\rho^I(\pi x,w)=R$ satisfies $D$. If $w=\pi(y)$ for
+a node $y$, then $y\neq x$ because $R$ is a proper relation, $\rho(x,y)=R$,
+and the \emph{reuse} alternative with $y$ is realized by $\pi$. Otherwise take
+the \emph{fresh} alternative, map the new node to $w$, and copy its relations
+from $I$. They are proper relations, because $w$ is not in the image of $\pi$
+and $\EQ$ is identity; $\rho$ stays closed under converse and composition
+because $I$ is an RCC5 frame; and $\pi$ stays injective.
+\end{proof}
+
+Strong $\EQ$ is used exactly once, in ``they are proper relations''. Without
+the \emph{reuse} alternative the case $w=\pi(y)$ has no realized successor,
+which is why reuse cannot be switched off under strong $\EQ$.
+
+\begin{lemma}[An open fair branch is a model]\label{lem:openbranch}
+Let $S_0,S_1,\dots$ be a branch none of whose states is closed, which ends in
+a saturated state if it is finite and is fair if it is infinite. Let
+$V=\bigcup_i V_i$, $L(x)=\bigcup_i L_i(x)$ and $\rho=\bigcup_i\rho_i$. Then
+$(V,\rho)$, with $\EQ$ on the diagonal, is an RCC5 frame, and $C_0$ holds at
+$x_0$ under the valuation $A\mapsto\{x: A\in L(x)\}$.
+\end{lemma}
+
+\begin{proof}
+Rules only add nodes, add concepts to labels and relate new nodes; a relation
+once given never changes. So the unions are well defined. Converse and
+composition are conditions on pairs and triples of nodes, and each pair and
+triple is present from some stage on, where the condition holds; the cases
+involving the diagonal hold in RCC5 for every proper relation. So $\rho$ is a
+converse-closed, composition-closed atomic network, proper off the diagonal.
+
+The labelling $L$ satisfies the Hintikka conditions on that frame. No label
+has a clash: two clashing members of $L(x)$ would both be in some $L_i(x)$,
+and $S_i$ would be closed. For $\sqcap$ and $\forall$: the premises are present
+at some stage, and the deterministic rules are applied to a fixed point after
+every step. For $\sqcup$: a finite branch ends in a saturated state; an
+infinite branch has infinitely many $\exists$-steps, since between two of them
+only finitely many $\sqcup$-steps are possible, and by the priority of the
+$\sqcup$-rule every disjunction present before an $\exists$-step has been
+resolved. For $\exists$: if $\exists R.D\in L(x)$, the existential is satisfied
+at some stage---by saturation in the finite case, by fairness in the infinite
+case---and satisfied existentials stay satisfied, because labels and relations
+only grow.
+
+A Hintikka labelling of an RCC5 frame is a model of every concept in its
+labels. That last step is machine-checked: it is the truth lemma of the Lean
+development (\code{truth\_lemmaP}, \code{satisfiable\_iff\_hintikkaP} in
+\texttt{formal/Round19Transport.lean}).
+\end{proof}
+
+\begin{theorem}[Soundness and completeness of the strong-$\EQ$ MiDeLoRa
+calculus]\label{thm:midelora}
+Let $C_0$ be an $\ALCIRCC5$ concept in negation normal form, under the
+composition-table semantics with strong $\EQ$, and fix a fair strategy.
+\begin{enumerate}\setlength\itemsep{0pt}
+  \item If the tableau contains a saturated state that is not closed, $C_0$
+    is satisfiable, and that state is a finite model.
+  \item If the tableau is finite and all its leaves are closed, $C_0$ is
+    unsatisfiable.
+  \item If $C_0$ is unsatisfiable, the tableau is finite and all its leaves
+    are closed.
+  \item If $C_0$ has a model with $n$ elements, the tableau restricted to
+    states with at most $n$ nodes contains a saturated state that is not
+    closed.
+\end{enumerate}
+Consequently the procedure ``for $N=1,2,3,\dots$: search the tableau
+depth-first, refusing a fresh node beyond $N$ nodes, and answer
+\textsc{unsat} only if every leaf is closed and no branch was refused''
+answers \textsc{unsat} on every unsatisfiable concept, answers \textsc{sat}
+with a model on every concept that has a finite model, and runs forever
+exactly on the satisfiable concepts all of whose models are infinite.
+\end{theorem}
+
+\begin{proof}
+(1) is Lemma~\ref{lem:openbranch} for a finite branch. (2) If $C_0$ had a
+model, the start state would be realized, by mapping $x_0$ to an element
+satisfying $C_0$, and by Lemma~\ref{lem:guides} the tableau would contain a
+branch of realized states, none of them closed; in a finite tableau that
+branch would end in a leaf that is not closed. (3) The tableau is finitely
+branching. If it were infinite, K\"onig's lemma would give an infinite branch;
+none of its states is closed, since a closed state has no successors; the
+strategy makes it fair; and Lemma~\ref{lem:openbranch} would give a model. So
+the tableau is finite. A leaf that is not closed is saturated and by~(1) would
+give a model, so all leaves are closed. (4) Follow Lemma~\ref{lem:guides} from
+the start state. The realization is injective, so no state on the realized
+branch has more than $n$ nodes; with at most $n$ nodes and labels inside
+$\cl(C_0)$ only finitely many steps are possible, so the branch ends, in a
+state that is saturated and not closed.
+
+For the consequence: for a bound $N$ the restricted tableau is finite, so
+each round ends. If $C_0$ is unsatisfiable, let $N$ be at least the size of
+the largest state of the finite full tableau; in that round no branch is
+refused a node and all leaves are closed. If $C_0$ has a model with $n$
+elements, round $n$ finds a saturated open state unless an earlier round did.
+An \textsc{unsat} answer is given only when the restricted tableau is the
+full one, and is then correct by~(2); a \textsc{sat} answer comes with a
+finite model by~(1). So a concept that is satisfiable only in infinite models
+receives neither.
+\end{proof}
+
+That last class is not empty: it contains $\exists\PP.\top\sqcap
+\forall\PP.\exists\PP.\top$ and the spiral concept of \S\ref{ssec:bridge},
+which has no vertical existential at all. For MiDeLoRa exactly as implemented,
+under weak $\EQ$, the same argument goes through with $\pi$ not required to be
+injective and $\EQ$ among the relations of $\rho$; that version is not written
+out, and its only support here is a test against exact weak-$\EQ$ ground truth
+on $300$ concepts.
+
+\paragraph{The implementation, and what was tested.}
+\texttt{src/midelora\_tableau.py} ($\approx 380$ lines of Python) implements
+the calculus, with \code{eq='strong'} as the default and \code{eq='weak'} for
+MiDeLoRa as implemented. It derives the composition table from set semantics
+and returns \textsc{sat} with a model, \textsc{unsat}, or \textsc{unknown}
+when its node bound or time limit is reached. It takes three liberties with
+the calculus, none of which changes a verdict: the relations of a fresh node
+are chosen one existing node at a time, with the deterministic rules run in
+between, so that a clash prunes early; a disjunction one of whose sides is a
+clashing literal is resolved without branching; and under \code{eq='weak'} the
+relations include $\EQ$ between different nodes, which is outside
+Theorem~\ref{thm:midelora}. The probe \texttt{wp139} checks the following, and
+all $33$ of its checks pass. The derived table equals MiDeLoRa's
+\code{rcc5-rolebox} in all $25$ cells. On $1{,}000$ random concepts of a class
+for which exhaustive search over closed networks on at most four points is a
+decision procedure, the reasoner is right on every one ($634$ satisfiable,
+$366$ not). On the $911$-case suite it returns a verdict on every concept---
+$775$ \textsc{sat}, each with a model that an independent function re-checks,
+and $136$ \textsc{unsat}---and agrees with the tableau, the oracle and the
+labels throughout. It accepts $K_2$, $C_{\mathrm{sat}}$ and the four-colour
+variant of the spiral, which has a four-point model, and rejects
+$C_{\mathrm{bad}}$, $C_{\mathrm{joint}}$ and $C_{\mathrm{cyc}}$; on
+$C_{\mathrm{cyc}}$ neither of the other two reasoners returns within ten
+minutes. On the $\PP$-tower, its dual and the five-colour spiral it stops at
+its node bound with \textsc{unknown}, giving neither a false refutation nor a
+false model. It has no caching and no backjumping, both of which MiDeLoRa has,
+and it emits no proof object, so an \textsc{unsat} answer is as trustworthy as
+the code.
+
+\paragraph{What this is, and is not.} It is not a step toward decidability.
+That unsatisfiability is recursively enumerable is Lutz and Wolter's
+Theorem~28 (\S\ref{ssec:lutzwolter}); what is added is a concrete calculus
+with a proof, and a program that runs. Termination is blocking, and a sound
+blocking condition is the open problem of \S\ref{ssec:approach-tableaux}: by
+\S\ref{ssec:bridge}, a terminating version would also decide two-variable
+logic over strict partial orders with unary predicates. Two next steps are
+natural and have not been taken. Formalizing Lemma~\ref{lem:guides} in Lean
+would turn a finite closed tableau into a kernel-checkable certificate of
+unsatisfiability, which the certified one-sided test of
+\S\ref{ssec:conescheme} cannot provide at realistic sizes. And the strong-$\EQ$
+rule could be carried back into MiDeLoRa itself, by calling its existing
+\code{join-nodes} from the JEPD prover. The 2003 report already said of the
+prototype then in use that its calculus ``can be shown to be sound and
+complete''~\cite{Wessel2003}; this subsection is that proof, for the calculus
+as it stands in MiDeLoRa, twenty-three years later.
 
 \newpage
 \section{On agentic AI usage}
@@ -3519,7 +3812,7 @@ syntactic fragment of the logic to two-variable logic over strict partial
 orders, with two slices decided by import and a second, purely horizontal,
 source of infinite models (\S\ref{ssec:bridge}); and (viii) a reference
 tableau without blocking, sound and complete by a paper proof and not
-terminating (\S\ref{sec:reasoners}).
+terminating (\S\ref{ssec:midelora}).
 
 Three of these are the project's flagship artifacts, and they are
 complementary rather than ranked. The certified decision procedure for the
@@ -3692,7 +3985,7 @@ $\mathcal L_{\parallel}$ without $\exists\PO$: decidable, 2-\textsc{NExpTime} & 
 $\mathcal L_{\parallel}$, finite satisfiability: decidable, 2-\textsc{NExpTime} & Theorem-level (by import, \cite{PrattHartmann2018}) & \texttt{papers/poset\_bridge/}, \S4(b); \code{poset\_bridge\_fin} & ---\\
 Infinity axiom without $\exists\PP$, $\exists\PPI$ & Lean-certified (unreviewed) & \texttt{PosetBridge.lean}: \code{spiralConcept\_sat}, \code{spiralConcept\_infinite}, \code{spiralConcept\_noExVert} & \texttt{wp137}\\
 Boundary concepts $K_2$, $C_{\mathrm{cyc}}$ & Lean-certified (unreviewed) & \texttt{PosetBridge.lean}: \code{k2\_sat}, \code{k2\_witnesses\_nested}, \code{ccyc\_unsat}, \code{ccycErased\_sat} & \texttt{wp137}\\
-Reference tableau: sound, complete, not terminating & Theorem-level (paper proof; last step Lean) & \texttt{papers/midelora\_calculus/}; \texttt{Round19Transport.lean}: \code{satisfiable\_iff\_hintikkaP} & \texttt{wp139}\\
+Reference tableau: sound, complete, not terminating (Theorem~\ref{thm:midelora}) & Theorem-level (paper proof; last step Lean) & \S\ref{ssec:midelora}; \texttt{papers/midelora\_calculus/}; \texttt{Round19Transport.lean}: \code{satisfiable\_iff\_hintikkaP} & \texttt{wp139}\\
 Reference reasoner (implementation) & Empirical & \texttt{src/midelora\_tableau.py} & \texttt{wp139}\\
 General satisfiability in $\mathcal L_{\parallel}$ & Open & --- (two-variable logic over strict partial orders, unary) & ---\\
 \bottomrule
@@ -3720,7 +4013,7 @@ was additionally supported by a \emph{Grundstipendium} of the University of
 Hamburg from 1999 to 2001. The decidability question was left open there. He
 completed his doctorate in 2008 at Hamburg University of Technology, on the
 practical side of the subject~\cite{Wessel2008}; the tableau of that
-dissertation is the reference reasoner of \S\ref{sec:reasoners}. The
+dissertation is the reference reasoner of \S\ref{ssec:midelora}. The
 present investigation was carried out by AI assistants---Claude
 Opus~4.6, 4.7 and 4.8, Claude Fable~5 and~5.2 and Claude Opus~5 (Anthropic),
 and GPT-5.4, GPT-5.4~Pro, GPT-5.5, GPT-5.6~Pro, GPT-5.6~Sol and Astra~6

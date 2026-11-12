@@ -176,10 +176,12 @@ exact strength: [`papers/poset_bridge/`](papers/poset_bridge/README.md).*
   predates these corrections.
 - **Untouched:** F6, bare `∀PO` (`C_bad`, `C_joint`), and how `DR`'s downward
   closure interacts with `∀PO`.
-- **The documents, re-synced (same day).** The overview (65 pp; a new
-  subsection on the bridge, a corrected reasoner section, status and artifact
-  tables), the fragment paper (22 pp; a new subsection on what lies just
-  outside), the slides (44 pp; one new slide), the explainer (20 pp),
+- **The documents, re-synced (same day).** The overview (69 pp; a new
+  subsection on the bridge, a subsection on MiDeLoRa with the calculus and its
+  soundness-and-completeness proof typeset, a corrected reasoner section,
+  status and artifact tables), the fragment paper (22 pp; a new subsection on
+  what lies just outside), the slides (44 pp; one new slide), the explainer
+  (21 pp),
   `WHY_ITS_HARD.md`, `LEAN.md`, the approach pages and this README were read in
   full against the new results and corrected. Besides the missing material
   that turned up: a slide that still stated the withdrawn theorem as fact;
@@ -544,7 +546,8 @@ re-implementation of the complete-graph tableau of Wessel's MiDeLoRa
 (dissertation 2008, §6.2.7.2 and §6.4.4), with EQ fixed to identity. It is the
 one reasoner here whose UNSAT answers rest on a completeness proof
 ([`papers/midelora_calculus/`](papers/midelora_calculus/README.md); a paper
-proof, unreviewed). It has no blocking and so does not terminate on concepts
+proof, unreviewed, typeset with an account of MiDeLoRa itself in the overview
+paper, §8.1). It has no blocking and so does not terminate on concepts
 all of whose models are infinite; it returns `UNKNOWN` at a node bound instead.
 It accepts `K2`, and agrees with the tableau and the oracle on all 911 suite
 concepts (`wp139`).

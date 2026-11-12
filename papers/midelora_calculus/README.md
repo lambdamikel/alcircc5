@@ -4,6 +4,11 @@
 The proofs below are on paper; only the last step of Lemma 2 is Lean-checked. The
 implementation is tested, not verified.*
 
+*The same material — the system, the calculus, the theorem and its proof — is
+typeset in the overview paper, §8.1
+([`overview_arxiv.pdf`](../overview_arxiv.pdf)), with the statements about
+MiDeLoRa's source checked against the public repository.*
+
 Artifacts: [`src/midelora_tableau.py`](../../src/midelora_tableau.py) (the reasoner)
 and [`verification/python/wp139_midelora_reference.py`](../../verification/python/wp139_midelora_reference.py)
 (33/33 checks pass).

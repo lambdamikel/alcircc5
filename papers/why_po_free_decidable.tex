@@ -201,6 +201,16 @@ triangle blocking, quadruple types, profile blocking, double blocking
 is the same obstruction the full logic's open width question (F6) runs
 into.
 
+\emph{Without} blocking, the tableau instinct does work, as a semi-decision
+procedure. The complete-graph tableau of Wessel's MiDeLoRa system, with $\EQ$
+as identity, is sound and complete: it answers on every unsatisfiable concept
+and on every concept with a finite model, and runs forever exactly on the
+satisfiable concepts all of whose models are infinite (a paper proof,
+unreviewed, typeset in the overview paper and in
+\code{papers/midelora\_calculus/}; a Python re-implementation is
+\code{src/midelora\_tableau.py}). Termination is blocking, and a sound
+blocking condition for the full logic is the open problem.
+
 So the fragment result has to earn its termination some other way. That
 way is the \emph{finite-certificate architecture}, and it is worth
 understanding on its own before either proof route, because both routes

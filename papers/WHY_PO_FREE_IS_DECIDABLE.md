@@ -1,7 +1,7 @@
 # Why the ∀PO-Free Fragment Is Decidable — A Guide for the Tableau-Minded
 
 > **📄 The full explainer is the typeset PDF:
-> [`why_po_free_decidable.pdf`](why_po_free_decidable.pdf)** (20 pp) ·
+> [`why_po_free_decidable.pdf`](why_po_free_decidable.pdf)** (21 pp) ·
 > [LaTeX source](why_po_free_decidable.tex). The certified result itself is
 > written up as a focused paper:
 > [`pofree_fragment_arxiv.pdf`](pofree_fragment_arxiv.pdf).

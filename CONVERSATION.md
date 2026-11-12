@@ -8939,3 +8939,27 @@ stayed open, and then started afresh at TUHH on the practical side, which is
 where the 2008 dissertation and MiDeLoRa come from. The README and the
 overview's acknowledgments now say so. The second phase is where the reference
 reasoner of this repository comes from.
+
+**Second addendum.** Michael asked whether anything about the MiDeLoRa
+calculus and prover had gone into the documents, and then for a proper section.
+The overview now has one (§8.1): what MiDeLoRa is — a framework and macro
+language for building tableau provers, written 2003–2005, with a prover for
+role boxes of jointly exhaustive and pairwise disjoint relations that serves
+ALCI_RCC5 and uses no blocking — the one adjustment it needs (it treats EQ
+between two individuals as an ordinary edge, which is weak EQ; strong EQ comes
+from always allowing an existential to reuse a successor), the calculus, and
+the proof typeset: a model guides a branch, an open fair branch is a model, and
+with König's lemma the calculus answers on every unsatisfiable concept and on
+every concept with a finite model, and on nothing else. The statements about
+the Lisp source were checked against the public repository. Two details there
+are worth having on record: one of the RCC5 examples adds axioms `p ⊑ ∀EQ.p`,
+which is strong EQ imposed by hand; and with `⊤ ⊑ ∀PO.⊥` a comment notes that
+the logic has the tree model property because joins must then be arranged
+linearly — the linearization the split forest rests on, for the PO-empty case.
+The dissertation itself could not be opened from here (the university
+repository challenges automated clients, and that was left alone), so its
+section numbers rest on the earlier session's reading. That session's remark
+that the test file contains the strong-EQ PO-loop is not right as stated; the
+nearest test is a chain of four PO steps to a concept excluded under all five
+relations. The report of 2003 said the prototype's calculus "can be shown to be
+sound and complete". The section is that proof, twenty-three years on.
